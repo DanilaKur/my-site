@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Мой дашборд</title>
+<style>
+  :root {
+    --bg: #0f1115;
+    --panel: #171a21;
+    --panel2: #1e222b;
+    --border: #2a2f3a;
+    --text: #e6e8ee;
+    --muted: #8b93a7;
+    --accent: #4f8cff;
+    --accent2: #22c55e;
+    --danger: #ef4444;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 15px;
+    line-height: 1.4;
+  }
+  header {
+    padding: 16px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  h1 {
+    margin: 0 0 12px;
+    font-size: 18px;
+    font-weight: 600;
+  }
+  .tabs {
+    display: flex;
+    gap: 6px;
+  }
+  .tab {
+    padding: 8px 14px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--panel2);
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 14px;
+    transition: .15s;
+  }
+  .tab.active {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+  }
+  main { padding: 16px; max-width: 900px; margin: 0 auto; }
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  input, select, button, textarea {
+    font-family: inherit;
+    font-size: 14px;
+  }
+  input, select, textarea {
+    background: var(--panel2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 9px 11px;
+    border-radius: 8px;
+    outline: none;
+    width: 100%;
+  }
+  input:focus, select:focus, textarea:focus { border-color: var(--accent); }
+
+  .row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+  .row > * { flex: 1; min-width: 120px; }
+
+  .btn {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    padding: 9px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+  .btn:hover { opacity: .9; }
+  .btn.ghost {
+    background: var(--panel2);
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+  .btn.danger { background: var(--danger); }
+  .btn.small { padding: 5px 9px; font-size: 12px; }
+
+  .toolbar {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+  }
+  .toolbar input { flex: 1; }
+
+  .category-title {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: var(--muted);
+    margin: 20px 0 8px;
+  }
+
+  .link-card {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 12px;
+    margin-bottom: 6px;
+  }
+  .link-card a {
+    color: var(--text);
+    text-decoration: none;
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .link-card a:hover { color: var(--accent); }
+  .link-card .url {
+    font-size: 12px;
+    color: var(--muted);
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .link-card .actions { display: flex; gap: 4px; }
+
+  .clip-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 8px;
+  }
+  .clip-btn {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 12px;
+    color: var(--text);
+    cursor: pointer;
+    text-align: left;
+    transition: .15s;
+    position: relative;
+    overflow: hidden;
+  }
+  .clip-btn:hover { border-color: var(--accent); }
+  .clip-btn.copied {
+    border-color: var(--accent2);
+    background: rgba(34,197,94,.1);
+  }
+  .clip-btn .label {
+    font-weight: 600;
+    display: block;
+    margin-bottom: 4px;
+    font-size: 14px;
+  }
+  .clip-btn .value {
+    font-size: 12px;
+    color: var(--muted);
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    display: block;
+  }
+  .clip-btn .copied-badge {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    font-size: 11px;
+    color: var(--accent2);
+    opacity: 0;
+    transition: .2s;
+  }
+  .clip-btn.copied .copied-badge { opacity: 1; }
+
+  .clip-actions {
+    display: flex;
+    gap: 4px;
+    margin-top: 8px;
+    justify-content: flex-end;
+  }
+
+  .empty {
+    color: var(--muted);
+    text-align: center;
+    padding: 40px 20px;
+    font-size: 14px;
+  }
+
+  .toast {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: var(--accent2);
+    color: #fff;
+    padding: 10px 18px;
+    border-radius: 10px;
+    font-size: 14px;
+    transition: .25s;
+    z-index: 100;
+    pointer-events: none;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  details.add-form {
+    margin-bottom: 16px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px;
+  }
+  details.add-form summary {
+    cursor: pointer;
+    color: var(--muted);
+    font-size: 14px;
+    user-select: none;
+  }
+  details.add-form[open] summary { margin-bottom: 12px; }
+
+  @media (max-width: 500px) {
+    .link-card .actions { flex-direction: column; }
+    main { padding: 12px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🧰 Мой дашборд</h1>
+  <div class="tabs">
+    <button class="tab active" data-tab="links">Ссылки</button>
+    <button class="tab" data-tab="clips">Быстрый буфер</button>
+  </div>
+</header>
+
+<main>
+
+  <!-- ================= ССЫЛКИ ================= -->
+  <section class="panel active" id="panel-links">
+    <div class="toolbar">
+      <input type="search" id="search" placeholder="🔍 Поиск по ссылкам...">
+      <button class="btn ghost" id="exportLinks">Экспорт</button>
+      <button class="btn ghost" id="importLinks">Импорт</button>
+      <input type="file" id="importFile" accept=".json" hidden>
+    </div>
+
+    <details class="add-form">
+      <summary>➕ Добавить ссылку</summary>
+      <div class="row">
+        <input type="text" id="linkTitle" placeholder="Название">
+        <input type="text" id="linkUrl" placeholder="https://...">
+      </div>
+      <div class="row">
+        <input type="text" id="linkCat" placeholder="Категория" list="catList">
+        <datalist id="catList"></datalist>
+        <button class="btn" id="addLink">Добавить</button>
+      </div>
+    </details>
+
+    <div id="linksList"></div>
+  </section>
+
+  <!-- ================= БУФЕР ================= -->
+  <section class="panel" id="panel-clips">
+    <div class="toolbar">
+      <button class="btn ghost" id="exportClips">Экспорт</button>
+      <button class="btn ghost" id="importClips">Импорт</button>
+      <input type="file" id="importClipsFile" accept=".json" hidden>
+    </div>
+
+    <details class="add-form">
+      <summary>➕ Добавить в буфер</summary>
+      <div class="row">
+        <input type="text" id="clipLabel" placeholder="Название">
+      </div>
+      <div class="row">
+        <input type="text" id="clipValue" placeholder="Значение">
+        <button class="btn" id="addClip">Добавить</button>
+      </div>
+    </details>
+
+    <div class="clip-grid" id="clipsList"></div>
+  </section>
+
+</main>
+
+<div class="toast" id="toast">Скопировано</div>
+
+<script>
+(() => {
+  "use strict";
+
+  // ---------- Утилиты ----------
+  const $ = (s) => document.querySelector(s);
+  const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+
+  const toast = (msg) => {
+    const t = $("#toast");
+    t.textContent = msg;
+    t.classList.add("show");
+    clearTimeout(t._timer);
+    t._timer = setTimeout(() => t.classList.remove("show"), 1500);
+  };
+
+  const load = (key, fallback) => {
+    try { return JSON.parse(localStorage.getItem(key)) ?? fallback; }
+    catch { return fallback; }
+  };
+  const save = (key, val) => localStorage.setItem(key, JSON.stringify(val));
+
+  const escapeHtml = (s) =>
+    String(s).replace(/[&<>"']/g, (c) => ({
+      "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+    }[c]));
+
+  // ---------- Копирование в буфер ----------
+  async function copyText(text) {
+    try {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch {
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.select();
+      const ok = document.execCommand("copy");
+      document.body.removeChild(ta);
+      return ok;
+    }
+  }
+
+  // ================== ВКЛАДКИ ==================
+  document.querySelectorAll(".tab").forEach((tab) => {
+    tab.addEventListener("click", () => {
+      document.querySelectorAll(".tab").forEach((t) => t.classList.remove("active"));
+      document.querySelectorAll(".panel").forEach((p) => p.classList.remove("active"));
+      tab.classList.add("active");
+      $("#panel-" + tab.dataset.tab).classList.add("active");
+    });
+  });
+
+  // ================== ССЫЛКИ ==================
+  let links = load("dashboard.links", []);
+
+  function renderLinks() {
+    const q = $("#search").value.trim().toLowerCase();
+    const list = $("#linksList");
+    const datalist = $("#catList");
+
+    const cats = [...new Set(links.map((l) => l.category).filter(Boolean))].sort();
+    datalist.innerHTML = cats.map((c) => `<option value="${escapeHtml(c)}">`).join("");
+
+    const filtered = q
+      ? links.filter((l) =>
+          (l.title + " " + l.url + " " + (l.category || "")).toLowerCase().includes(q)
+        )
+      : links;
+
+    if (!filtered.length) {
+      list.innerHTML = `<div class="empty">${
+        q ? "Ничего не найдено" : "Пока нет ссылок"
+      }</div>`;
+      return;
+    }
+
+    const groups = {};
+    filtered.forEach((l) => {
+      const c = l.category || "Без категории";
+      (groups[c] ||= []).push(l);
+    });
+
+    let html = "";
+    Object.keys(groups).sort().forEach((cat) => {
+      html += `<div class="category-title">${escapeHtml(cat)}</div>`;
+      groups[cat].forEach((l) => {
+        html += `
+          <div class="link-card">
+            <a href="${escapeHtml(l.url)}" target="_blank" rel="noopener">
+              ${escapeHtml(l.title)}
+              <span class="url">${escapeHtml(l.url)}</span>
+            </a>
+            <div class="actions">
+              <button class="btn small ghost" data-copy="${l.id}" title="Скопировать ссылку">🔗</button>
+              <button class="btn small danger" data-del="${l.id}" title="Удалить">✕</button>
+            </div>
+          </div>`;
+      });
+    });
+
+    list.innerHTML = html;
+
+    list.querySelectorAll("[data-del]").forEach((b) => {
+      b.onclick = () => {
+        if (!confirm("Удалить ссылку?")) return;
+        links = links.filter((l) => l.id !== b.dataset.del);
+        save("dashboard.links", links);
+        renderLinks();
+      };
+    });
+
+    list.querySelectorAll("[data-copy]").forEach((b) => {
+      b.onclick = async () => {
+        const l = links.find((x) => x.id === b.dataset.copy);
+        if (!l) return;
+        (await copyText(l.url)) ? toast("Ссылка скопирована") : toast("Не удалось скопировать");
+      };
+    });
+  }
+
+  $("#search").addEventListener("input", renderLinks);
+
+  $("#addLink").onclick = () => {
+    const title = $("#linkTitle").value.trim();
+    let url = $("#linkUrl").value.trim();
+    const category = $("#linkCat").value.trim();
+    if (!title || !url) return toast("Заполни название и URL");
+    if (!/^https?:\/\//i.test(url)) url = "https://" + url;
+    links.push({ id: uid(), title, url, category });
+    save("dashboard.links", links);
+    $("#linkTitle").value = $("#linkUrl").value = "";
+    renderLinks();
+    toast("Ссылка добавлена");
+  };
+
+  const download = (data, filename) => {
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  };
+
+  $("#exportLinks").onclick = () => download(links, "links.json");
+  $("#importLinks").onclick = () => $("#importFile").click();
+  $("#importFile").onchange = (e) => {
+    const f = e.target.files[0];
+    if (!f) return;
+    const r = new FileReader();
+    r.onload = () => {
+      try {
+        const data = JSON.parse(r.result);
+        if (!Array.isArray(data)) throw new Error();
+        links = data.map((l) => ({ id: l.id || uid(), ...l }));
+        save("dashboard.links", links);
+        renderLinks();
+        toast("Импортировано: " + data.length);
+      } catch {
+        toast("Ошибка чтения файла");
+      }
+    };
+    r.readAsText(f);
+    e.target.value = "";
+  };
+
+  // ================== БУФЕР ==================
+  let clips = load("dashboard.clips", []);
+
+  function renderClips() {
+    const grid = $("#clipsList");
+    if (!clips.length) {
+      grid.innerHTML = `<div class="empty">Пока пусто</div>`;
+      return;
+    }
+    grid.innerHTML = clips.map((c) => `
+      <div class="clip-btn" data-id="${c.id}">
+        <span class="label">${escapeHtml(c.label)}</span>
+        <span class="value">${escapeHtml(c.value)}</span>
+        <span class="copied-badge">✓ скопировано</span>
+        <div class="clip-actions">
+          <button class="btn small ghost" data-edit="${c.id}" title="Редактировать">✎</button>
+          <button class="btn small danger" data-del="${c.id}" title="Удалить">✕</button>
+        </div>
+      </div>
+    `).join("");
+
+    grid.querySelectorAll(".clip-btn").forEach((btn) => {
+      btn.onclick = async (e) => {
+        if (e.target.closest("[data-edit],[data-del]")) return;
+        const c = clips.find((x) => x.id === btn.dataset.id);
+        if (!c) return;
+        const ok = await copyText(c.value);
+        if (ok) {
+          btn.classList.add("copied");
+          setTimeout(() => btn.classList.remove("copied"), 1200);
+          toast("Скопировано: " + c.label);
+        } else {
+          toast("Не удалось скопировать");
+        }
+      };
+    });
+
+    grid.querySelectorAll("[data-del]").forEach((b) => {
+      b.onclick = (e) => {
+        e.stopPropagation();
+        if (!confirm("Удалить кнопку?")) return;
+        clips = clips.filter((c) => c.id !== b.dataset.del);
+        save("dashboard.clips", clips);
+        renderClips();
+      };
+    });
+
+    grid.querySelectorAll("[data-edit]").forEach((b) => {
+      b.onclick = (e) => {
+        e.stopPropagation();
+        const c = clips.find((x) => x.id === b.dataset.edit);
+        if (!c) return;
+        const newLabel = prompt("Название:", c.label);
+        if (newLabel === null) return;
+        const newValue = prompt("Значение:", c.value);
+        if (newValue === null) return;
+        c.label = newLabel.trim() || c.label;
+        c.value = newValue;
+        save("dashboard.clips", clips);
+        renderClips();
+      };
+    });
+  }
+
+  $("#addClip").onclick = () => {
+    const label = $("#clipLabel").value.trim();
+    const value = $("#clipValue").value;
+    if (!label || !value) return toast("Заполни название и значение");
+    clips.push({ id: uid(), label, value });
+    save("dashboard.clips", clips);
+    $("#clipLabel").value = $("#clipValue").value = "";
+    renderClips();
+    toast("Кнопка добавлена");
+  };
+
+  $("#exportClips").onclick = () => download(clips, "clips.json");
+  $("#importClips").onclick = () => $("#importClipsFile").click();
+  $("#importClipsFile").onchange = (e) => {
+    const f = e.target.files[0];
+    if (!f) return;
+    const r = new FileReader();
+    r.onload = () => {
+      try {
+        const data = JSON.parse(r.result);
+        if (!Array.isArray(data)) throw new Error();
+        clips = data.map((c) => ({ id: c.id || uid(), ...c }));
+        save("dashboard.clips", clips);
+        renderClips();
+        toast("Импортировано: " + data.length);
+      } catch {
+        toast("Ошибка чтения файла");
+      }
+    };
+    r.readAsText(f);
+    e.target.value = "";
+  };
+
+  // ================== СТАРТ ==================
+  renderLinks();
+  renderClips();
+})();
+</script>
+</body>
+</html>
