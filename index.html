@@ -60,6 +60,7 @@
     display: flex;
     gap: 6px;
     flex: 1;
+    flex-wrap: wrap;
   }
   .header-actions {
     display: flex;
@@ -98,6 +99,7 @@
     width: 100%;
   }
   input:focus, select:focus, textarea:focus { border-color: var(--accent); }
+  textarea { resize: vertical; min-height: 90px; font-family: ui-monospace, Menlo, monospace; font-size: 13px; }
 
   .row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
   .row > * { flex: 1; min-width: 120px; }
@@ -213,13 +215,38 @@
     transition: .2s;
   }
   .clip-btn.copied .copied-badge { opacity: 1; }
-
   .clip-actions {
     display: flex;
     gap: 4px;
     margin-top: 8px;
     justify-content: flex-end;
   }
+
+  /* ============ БЛОКИ ============ */
+  .block-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px;
+    margin-bottom: 14px;
+  }
+  .block-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .block-title {
+    font-weight: 600;
+    font-size: 15px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .block-actions { display: flex; gap: 4px; flex-shrink: 0; }
+  .block-body { font-size: 14px; }
+  .block-body .btn { padding: 7px 12px; }
 
   .empty {
     color: var(--muted);
@@ -275,6 +302,7 @@
     <div class="tabs">
       <button class="tab active" data-tab="links">Ссылки</button>
       <button class="tab" data-tab="clips">Быстрый буфер</button>
+      <button class="tab" data-tab="blocks">Блоки</button>
     </div>
     <div class="header-actions">
       <button class="btn small ghost" id="themeToggle" title="Переключить тему">🌙</button>
@@ -292,7 +320,6 @@
     <div class="toolbar">
       <input type="search" id="search" placeholder="🔍 Поиск по ссылкам...">
     </div>
-
     <details class="add-form">
       <summary>➕ Добавить ссылку</summary>
       <div class="row">
@@ -305,7 +332,6 @@
         <button class="btn" id="addLink">Добавить</button>
       </div>
     </details>
-
     <div id="linksList"></div>
   </section>
 
@@ -321,8 +347,27 @@
         <button class="btn" id="addClip">Добавить</button>
       </div>
     </details>
-
     <div class="clip-grid" id="clipsList"></div>
+  </section>
+
+  <!-- ================= БЛОКИ ================= -->
+  <section class="panel" id="panel-blocks">
+    <details class="add-form">
+      <summary>➕ Добавить блок</summary>
+      <div class="row">
+        <input type="text" id="blockName" placeholder="Название блока">
+      </div>
+      <div style="margin-bottom:12px">
+        <textarea id="blockCode" placeholder="// Код получает переменную el — DOM-контейнер блока
+// Пример:
+el.innerHTML = '&lt;button class=&quot;btn&quot;&gt;Привет&lt;/button&gt;';
+el.querySelector('button').onclick = () =&gt; alert('Работает!');"></textarea>
+      </div>
+      <div class="row">
+        <button class="btn" id="addBlock">Добавить блок</button>
+      </div>
+    </details>
+    <div id="blocksList"></div>
   </section>
 
 </main>
@@ -356,19 +401,13 @@
     }[c]));
 
   async function copyText(text) {
-    try {
-      await navigator.clipboard.writeText(text);
-      return true;
-    } catch {
+    try { await navigator.clipboard.writeText(text); return true; }
+    catch {
       const ta = document.createElement("textarea");
-      ta.value = text;
-      ta.style.position = "fixed";
-      ta.style.opacity = "0";
-      document.body.appendChild(ta);
-      ta.select();
+      ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0";
+      document.body.appendChild(ta); ta.select();
       const ok = document.execCommand("copy");
-      document.body.removeChild(ta);
-      return ok;
+      document.body.removeChild(ta); return ok;
     }
   }
 
@@ -377,10 +416,8 @@
     document.documentElement.dataset.theme = theme;
     $("#themeToggle").textContent = theme === "dark" ? "🌙" : "☀️";
   }
-
   let currentTheme = localStorage.getItem("dashboard.theme") || "dark";
   applyTheme(currentTheme);
-
   $("#themeToggle").onclick = () => {
     currentTheme = currentTheme === "dark" ? "light" : "dark";
     localStorage.setItem("dashboard.theme", currentTheme);
@@ -410,14 +447,11 @@
 
     const filtered = q
       ? links.filter((l) =>
-          (l.title + " " + l.url + " " + (l.category || "")).toLowerCase().includes(q)
-        )
+          (l.title + " " + l.url + " " + (l.category || "")).toLowerCase().includes(q))
       : links;
 
     if (!filtered.length) {
-      list.innerHTML = `<div class="empty">${
-        q ? "Ничего не найдено" : "Пока нет ссылок"
-      }</div>`;
+      list.innerHTML = `<div class="empty">${q ? "Ничего не найдено" : "Пока нет ссылок"}</div>`;
       return;
     }
 
@@ -444,18 +478,15 @@
           </div>`;
       });
     });
-
     list.innerHTML = html;
 
     list.querySelectorAll("[data-del]").forEach((b) => {
       b.onclick = () => {
         if (!confirm("Удалить ссылку?")) return;
         links = links.filter((l) => l.id !== b.dataset.del);
-        save("dashboard.links", links);
-        renderLinks();
+        save("dashboard.links", links); renderLinks();
       };
     });
-
     list.querySelectorAll("[data-copy]").forEach((b) => {
       b.onclick = async () => {
         const l = links.find((x) => x.id === b.dataset.copy);
@@ -466,7 +497,6 @@
   }
 
   $("#search").addEventListener("input", renderLinks);
-
   $("#addLink").onclick = () => {
     const title = $("#linkTitle").value.trim();
     let url = $("#linkUrl").value.trim();
@@ -476,8 +506,7 @@
     links.push({ id: uid(), title, url, category });
     save("dashboard.links", links);
     $("#linkTitle").value = $("#linkUrl").value = "";
-    renderLinks();
-    toast("Ссылка добавлена");
+    renderLinks(); toast("Ссылка добавлена");
   };
 
   // ================== БУФЕР ==================
@@ -485,10 +514,7 @@
 
   function renderClips() {
     const grid = $("#clipsList");
-    if (!clips.length) {
-      grid.innerHTML = `<div class="empty">Пока пусто</div>`;
-      return;
-    }
+    if (!clips.length) { grid.innerHTML = `<div class="empty">Пока пусто</div>`; return; }
     grid.innerHTML = clips.map((c) => `
       <div class="clip-btn" data-id="${c.id}">
         <span class="label">${escapeHtml(c.label)}</span>
@@ -511,35 +537,27 @@
           btn.classList.add("copied");
           setTimeout(() => btn.classList.remove("copied"), 1200);
           toast("Скопировано: " + c.label);
-        } else {
-          toast("Не удалось скопировать");
-        }
+        } else toast("Не удалось скопировать");
       };
     });
-
     grid.querySelectorAll("[data-del]").forEach((b) => {
       b.onclick = (e) => {
         e.stopPropagation();
         if (!confirm("Удалить кнопку?")) return;
         clips = clips.filter((c) => c.id !== b.dataset.del);
-        save("dashboard.clips", clips);
-        renderClips();
+        save("dashboard.clips", clips); renderClips();
       };
     });
-
     grid.querySelectorAll("[data-edit]").forEach((b) => {
       b.onclick = (e) => {
         e.stopPropagation();
         const c = clips.find((x) => x.id === b.dataset.edit);
         if (!c) return;
-        const newLabel = prompt("Название:", c.label);
-        if (newLabel === null) return;
-        const newValue = prompt("Значение:", c.value);
-        if (newValue === null) return;
+        const newLabel = prompt("Название:", c.label); if (newLabel === null) return;
+        const newValue = prompt("Значение:", c.value); if (newValue === null) return;
         c.label = newLabel.trim() || c.label;
         c.value = newValue;
-        save("dashboard.clips", clips);
-        renderClips();
+        save("dashboard.clips", clips); renderClips();
       };
     });
   }
@@ -551,8 +569,89 @@
     clips.push({ id: uid(), label, value });
     save("dashboard.clips", clips);
     $("#clipLabel").value = $("#clipValue").value = "";
-    renderClips();
-    toast("Кнопка добавлена");
+    renderClips(); toast("Кнопка добавлена");
+  };
+
+  // ================== БЛОКИ ==================
+  let blocks = load("dashboard.blocks", []);
+
+  function runBlock(container, code) {
+    container.innerHTML = "";
+    try {
+      const fn = new Function("el", code);
+      fn(container);
+    } catch (e) {
+      container.innerHTML = `<div style="color:var(--danger);font-size:13px">Ошибка блока: ${escapeHtml(e.message)}</div>`;
+    }
+  }
+
+  function renderBlocks() {
+    const wrap = $("#blocksList");
+    if (!blocks.length) {
+      wrap.innerHTML = `<div class="empty">Пока нет блоков</div>`;
+      return;
+    }
+    wrap.innerHTML = blocks.map((b) => `
+      <div class="block-card" data-id="${b.id}">
+        <div class="block-head">
+          <span class="block-title">${escapeHtml(b.name)}</span>
+          <div class="block-actions">
+            <button class="btn small ghost" data-reload="${b.id}" title="Перезапустить">↻</button>
+            <button class="btn small ghost" data-edit="${b.id}" title="Изменить">✎</button>
+            <button class="btn small danger" data-del="${b.id}" title="Удалить">✕</button>
+          </div>
+        </div>
+        <div class="block-body" id="block-body-${b.id}"></div>
+      </div>
+    `).join("");
+
+    blocks.forEach((b) => {
+      const container = document.getElementById("block-body-" + b.id);
+      if (container) runBlock(container, b.code);
+    });
+
+    wrap.querySelectorAll("[data-reload]").forEach((btn) => {
+      btn.onclick = () => {
+        const b = blocks.find((x) => x.id === btn.dataset.reload);
+        if (!b) return;
+        const container = document.getElementById("block-body-" + b.id);
+        if (container) runBlock(container, b.code);
+      };
+    });
+    wrap.querySelectorAll("[data-edit]").forEach((btn) => {
+      btn.onclick = () => {
+        const b = blocks.find((x) => x.id === btn.dataset.edit);
+        if (!b) return;
+        const newName = prompt("Название:", b.name);
+        if (newName === null) return;
+        const newCode = prompt("Код блока:", b.code);
+        if (newCode === null) return;
+        b.name = newName.trim() || b.name;
+        b.code = newCode;
+        save("dashboard.blocks", blocks);
+        renderBlocks();
+      };
+    });
+    wrap.querySelectorAll("[data-del]").forEach((btn) => {
+      btn.onclick = () => {
+        if (!confirm("Удалить блок?")) return;
+        blocks = blocks.filter((x) => x.id !== btn.dataset.del);
+        save("dashboard.blocks", blocks);
+        renderBlocks();
+      };
+    });
+  }
+
+  $("#addBlock").onclick = () => {
+    const name = $("#blockName").value.trim();
+    const code = $("#blockCode").value;
+    if (!name || !code.trim()) return toast("Заполни название и код");
+    blocks.push({ id: uid(), name, code });
+    save("dashboard.blocks", blocks);
+    $("#blockName").value = "";
+    $("#blockCode").value = "";
+    renderBlocks();
+    toast("Блок добавлен");
   };
 
   // ================== ЭКСПОРТ / ИМПОРТ ==================
@@ -567,10 +666,9 @@
 
   $("#exportAll").onclick = () => {
     download({
-      version: 1,
+      version: 2,
       exportedAt: new Date().toISOString(),
-      links,
-      clips,
+      links, clips, blocks,
     }, "dashboard.json");
     toast("Экспортировано");
   };
@@ -584,51 +682,42 @@
     r.onload = () => {
       try {
         const data = JSON.parse(r.result);
-        let importedLinks = 0, importedClips = 0;
+        let iL = 0, iC = 0, iB = 0;
 
         if (data && typeof data === "object" && !Array.isArray(data)) {
           if (Array.isArray(data.links)) {
             links = data.links.map((l) => ({ id: l.id || uid(), ...l }));
-            save("dashboard.links", links);
-            renderLinks();
-            importedLinks = data.links.length;
+            save("dashboard.links", links); renderLinks(); iL = data.links.length;
           }
           if (Array.isArray(data.clips)) {
             clips = data.clips.map((c) => ({ id: c.id || uid(), ...c }));
-            save("dashboard.clips", clips);
-            renderClips();
-            importedClips = data.clips.length;
+            save("dashboard.clips", clips); renderClips(); iC = data.clips.length;
+          }
+          if (Array.isArray(data.blocks)) {
+            blocks = data.blocks.map((b) => ({ id: b.id || uid(), name: b.name || 'Блок', code: b.code || '' }));
+            save("dashboard.blocks", blocks); renderBlocks(); iB = data.blocks.length;
           }
         } else if (Array.isArray(data)) {
           const first = data[0] || {};
           if ("url" in first || "title" in first) {
             links = data.map((l) => ({ id: l.id || uid(), ...l }));
-            save("dashboard.links", links);
-            renderLinks();
-            importedLinks = data.length;
+            save("dashboard.links", links); renderLinks(); iL = data.length;
           } else if ("value" in first || "label" in first) {
             clips = data.map((c) => ({ id: c.id || uid(), ...c }));
-            save("dashboard.clips", clips);
-            renderClips();
-            importedClips = data.length;
+            save("dashboard.clips", clips); renderClips(); iC = data.length;
           } else {
             throw new Error("unknown structure");
           }
-        } else {
-          throw new Error("unknown format");
-        }
+        } else throw new Error("unknown format");
 
-        if (importedLinks || importedClips) {
+        if (iL || iC || iB) {
           const parts = [];
-          if (importedLinks) parts.push("ссылок: " + importedLinks);
-          if (importedClips) parts.push("буфера: " + importedClips);
+          if (iL) parts.push("ссылок: " + iL);
+          if (iC) parts.push("буфера: " + iC);
+          if (iB) parts.push("блоков: " + iB);
           toast("Импортировано " + parts.join(", "));
-        } else {
-          toast("Нечего импортировать");
-        }
-      } catch {
-        toast("Ошибка чтения файла");
-      }
+        } else toast("Нечего импортировать");
+      } catch { toast("Ошибка чтения файла"); }
     };
     r.readAsText(f);
     e.target.value = "";
@@ -637,6 +726,7 @@
   // ================== СТАРТ ==================
   renderLinks();
   renderClips();
+  renderBlocks();
 })();
 </script>
 </body>
