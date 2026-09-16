@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="ru" data-theme="dark">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Мой дашборд</title>
 <style>
-  :root {
+  :root[data-theme="dark"] {
     --bg: #0f1115;
     --panel: #171a21;
     --panel2: #1e222b;
@@ -16,6 +16,17 @@
     --accent2: #22c55e;
     --danger: #ef4444;
   }
+  :root[data-theme="light"] {
+    --bg: #f4f5f7;
+    --panel: #ffffff;
+    --panel2: #eef0f4;
+    --border: #d5d8e0;
+    --text: #1a1d23;
+    --muted: #6b7280;
+    --accent: #2563eb;
+    --accent2: #16a34a;
+    --danger: #dc2626;
+  }
   * { box-sizing: border-box; }
   body {
     margin: 0;
@@ -24,6 +35,7 @@
     color: var(--text);
     font-size: 15px;
     line-height: 1.4;
+    transition: background .2s, color .2s;
   }
   header {
     padding: 16px;
@@ -38,7 +50,18 @@
     font-size: 18px;
     font-weight: 600;
   }
+  .header-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
   .tabs {
+    display: flex;
+    gap: 6px;
+    flex: 1;
+  }
+  .header-actions {
     display: flex;
     gap: 6px;
   }
@@ -239,6 +262,8 @@
   @media (max-width: 500px) {
     .link-card .actions { flex-direction: column; }
     main { padding: 12px; }
+    .header-actions { width: 100%; }
+    .header-actions .btn { flex: 1; }
   }
 </style>
 </head>
@@ -246,9 +271,17 @@
 
 <header>
   <h1>🧰 Мой дашборд</h1>
-  <div class="tabs">
-    <button class="tab active" data-tab="links">Ссылки</button>
-    <button class="tab" data-tab="clips">Быстрый буфер</button>
+  <div class="header-row">
+    <div class="tabs">
+      <button class="tab active" data-tab="links">Ссылки</button>
+      <button class="tab" data-tab="clips">Быстрый буфер</button>
+    </div>
+    <div class="header-actions">
+      <button class="btn small ghost" id="themeToggle" title="Переключить тему">🌙</button>
+      <button class="btn small ghost" id="exportAll" title="Скачать dashboard.json">⬇ Экспорт</button>
+      <button class="btn small ghost" id="importAll" title="Загрузить dashboard.json">⬆ Импорт</button>
+      <input type="file" id="importAllFile" accept=".json" hidden>
+    </div>
   </div>
 </header>
 
@@ -258,9 +291,6 @@
   <section class="panel active" id="panel-links">
     <div class="toolbar">
       <input type="search" id="search" placeholder="🔍 Поиск по ссылкам...">
-      <button class="btn ghost" id="exportLinks">Экспорт</button>
-      <button class="btn ghost" id="importLinks">Импорт</button>
-      <input type="file" id="importFile" accept=".json" hidden>
     </div>
 
     <details class="add-form">
@@ -281,12 +311,6 @@
 
   <!-- ================= БУФЕР ================= -->
   <section class="panel" id="panel-clips">
-    <div class="toolbar">
-      <button class="btn ghost" id="exportClips">Экспорт</button>
-      <button class="btn ghost" id="importClips">Импорт</button>
-      <input type="file" id="importClipsFile" accept=".json" hidden>
-    </div>
-
     <details class="add-form">
       <summary>➕ Добавить в буфер</summary>
       <div class="row">
@@ -309,7 +333,6 @@
 (() => {
   "use strict";
 
-  // ---------- Утилиты ----------
   const $ = (s) => document.querySelector(s);
   const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 
@@ -332,7 +355,6 @@
       "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
     }[c]));
 
-  // ---------- Копирование в буфер ----------
   async function copyText(text) {
     try {
       await navigator.clipboard.writeText(text);
@@ -349,6 +371,21 @@
       return ok;
     }
   }
+
+  // ================== ТЕМА ==================
+  function applyTheme(theme) {
+    document.documentElement.dataset.theme = theme;
+    $("#themeToggle").textContent = theme === "dark" ? "🌙" : "☀️";
+  }
+
+  let currentTheme = localStorage.getItem("dashboard.theme") || "dark";
+  applyTheme(currentTheme);
+
+  $("#themeToggle").onclick = () => {
+    currentTheme = currentTheme === "dark" ? "light" : "dark";
+    localStorage.setItem("dashboard.theme", currentTheme);
+    applyTheme(currentTheme);
+  };
 
   // ================== ВКЛАДКИ ==================
   document.querySelectorAll(".tab").forEach((tab) => {
@@ -443,37 +480,6 @@
     toast("Ссылка добавлена");
   };
 
-  const download = (data, filename) => {
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = filename;
-    a.click();
-    URL.revokeObjectURL(a.href);
-  };
-
-  $("#exportLinks").onclick = () => download(links, "links.json");
-  $("#importLinks").onclick = () => $("#importFile").click();
-  $("#importFile").onchange = (e) => {
-    const f = e.target.files[0];
-    if (!f) return;
-    const r = new FileReader();
-    r.onload = () => {
-      try {
-        const data = JSON.parse(r.result);
-        if (!Array.isArray(data)) throw new Error();
-        links = data.map((l) => ({ id: l.id || uid(), ...l }));
-        save("dashboard.links", links);
-        renderLinks();
-        toast("Импортировано: " + data.length);
-      } catch {
-        toast("Ошибка чтения файла");
-      }
-    };
-    r.readAsText(f);
-    e.target.value = "";
-  };
-
   // ================== БУФЕР ==================
   let clips = load("dashboard.clips", []);
 
@@ -549,20 +555,77 @@
     toast("Кнопка добавлена");
   };
 
-  $("#exportClips").onclick = () => download(clips, "clips.json");
-  $("#importClips").onclick = () => $("#importClipsFile").click();
-  $("#importClipsFile").onchange = (e) => {
+  // ================== ЭКСПОРТ / ИМПОРТ ==================
+  const download = (data, filename) => {
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  };
+
+  $("#exportAll").onclick = () => {
+    download({
+      version: 1,
+      exportedAt: new Date().toISOString(),
+      links,
+      clips,
+    }, "dashboard.json");
+    toast("Экспортировано");
+  };
+
+  $("#importAll").onclick = () => $("#importAllFile").click();
+
+  $("#importAllFile").onchange = (e) => {
     const f = e.target.files[0];
     if (!f) return;
     const r = new FileReader();
     r.onload = () => {
       try {
         const data = JSON.parse(r.result);
-        if (!Array.isArray(data)) throw new Error();
-        clips = data.map((c) => ({ id: c.id || uid(), ...c }));
-        save("dashboard.clips", clips);
-        renderClips();
-        toast("Импортировано: " + data.length);
+        let importedLinks = 0, importedClips = 0;
+
+        if (data && typeof data === "object" && !Array.isArray(data)) {
+          if (Array.isArray(data.links)) {
+            links = data.links.map((l) => ({ id: l.id || uid(), ...l }));
+            save("dashboard.links", links);
+            renderLinks();
+            importedLinks = data.links.length;
+          }
+          if (Array.isArray(data.clips)) {
+            clips = data.clips.map((c) => ({ id: c.id || uid(), ...c }));
+            save("dashboard.clips", clips);
+            renderClips();
+            importedClips = data.clips.length;
+          }
+        } else if (Array.isArray(data)) {
+          const first = data[0] || {};
+          if ("url" in first || "title" in first) {
+            links = data.map((l) => ({ id: l.id || uid(), ...l }));
+            save("dashboard.links", links);
+            renderLinks();
+            importedLinks = data.length;
+          } else if ("value" in first || "label" in first) {
+            clips = data.map((c) => ({ id: c.id || uid(), ...c }));
+            save("dashboard.clips", clips);
+            renderClips();
+            importedClips = data.length;
+          } else {
+            throw new Error("unknown structure");
+          }
+        } else {
+          throw new Error("unknown format");
+        }
+
+        if (importedLinks || importedClips) {
+          const parts = [];
+          if (importedLinks) parts.push("ссылок: " + importedLinks);
+          if (importedClips) parts.push("буфера: " + importedClips);
+          toast("Импортировано " + parts.join(", "));
+        } else {
+          toast("Нечего импортировать");
+        }
       } catch {
         toast("Ошибка чтения файла");
       }
