@@ -3,376 +3,675 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Мой дашборд</title>
+<title>Панель</title>
 <style>
   :root[data-theme="dark"] {
-    --bg: #0f1115;
-    --panel: #171a21;
-    --panel2: #1e222b;
-    --border: #2a2f3a;
-    --text: #e6e8ee;
-    --muted: #8b93a7;
-    --accent: #4f8cff;
-    --accent2: #22c55e;
-    --danger: #ef4444;
+    --bg: #0a0c10;
+    --panel: #11141a;
+    --panel2: #171b23;
+    --panel3: #1e232d;
+    --border: #232833;
+    --border-soft: #1a1f28;
+    --text: #e7e9ee;
+    --muted: #7c8395;
+    --muted-2: #525a6b;
+    --accent: #4a7dff;
+    --accent-soft: rgba(74,125,255,.12);
+    --accent-hover: #5c8cff;
+    --danger: #e5484d;
+    --danger-soft: rgba(229,72,77,.10);
+    --shadow-sm: 0 1px 2px rgba(0,0,0,.3);
+    --shadow-md: 0 4px 16px rgba(0,0,0,.35);
+    --shadow-lg: 0 20px 60px rgba(0,0,0,.5);
   }
   :root[data-theme="light"] {
-    --bg: #f4f5f7;
+    --bg: #f5f6f8;
     --panel: #ffffff;
-    --panel2: #eef0f4;
-    --border: #d5d8e0;
-    --text: #1a1d23;
+    --panel2: #f2f4f7;
+    --panel3: #e8ebf0;
+    --border: #e0e3ea;
+    --border-soft: #eceff4;
+    --text: #12151c;
     --muted: #6b7280;
+    --muted-2: #9aa1b1;
     --accent: #2563eb;
-    --accent2: #16a34a;
+    --accent-soft: rgba(37,99,235,.08);
+    --accent-hover: #1d4ed8;
     --danger: #dc2626;
+    --danger-soft: rgba(220,38,38,.08);
+    --shadow-sm: 0 1px 2px rgba(18,21,28,.05);
+    --shadow-md: 0 4px 16px rgba(18,21,28,.08);
+    --shadow-lg: 0 20px 60px rgba(18,21,28,.15);
   }
+
   * { box-sizing: border-box; }
+  html, body { height: 100%; }
+
   body {
     margin: 0;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Inter", Roboto, sans-serif;
     background: var(--bg);
     color: var(--text);
-    font-size: 15px;
-    line-height: 1.4;
-    transition: background .2s, color .2s;
+    font-size: 14px;
+    line-height: 1.45;
+    transition: background-color .2s, color .2s;
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
   }
-  header {
-    padding: 16px;
-    border-bottom: 1px solid var(--border);
-    background: var(--panel);
-    position: sticky;
-    top: 0;
-    z-index: 10;
-  }
-  h1 {
-    margin: 0 0 12px;
-    font-size: 18px;
-    font-weight: 600;
-  }
-  .header-row {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-    align-items: center;
-  }
-  .tabs {
-    display: flex;
-    gap: 6px;
-    flex: 1;
-    flex-wrap: wrap;
-  }
-  .header-actions {
-    display: flex;
-    gap: 6px;
-  }
-  .tab {
-    padding: 8px 14px;
+
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb {
+    background: var(--border);
     border-radius: 8px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+  }
+
+  .app { display: flex; height: 100vh; width: 100vw; }
+
+  /* ============ КНОПКА МЕНЮ (плавающая, только мобилка) ============ */
+  .menu-toggle {
+    display: none;
+    position: fixed;
+    top: 12px;
+    left: 12px;
+    z-index: 70;
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
+    background: var(--panel);
     border: 1px solid var(--border);
-    background: var(--panel2);
+    color: var(--text);
+    box-shadow: var(--shadow-md);
+    cursor: pointer;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    font-family: inherit;
+    transition: background .15s, border-color .15s;
+  }
+  .menu-toggle:hover { background: var(--panel2); border-color: var(--muted-2); }
+  .menu-toggle:active { transform: scale(.97); }
+  .menu-toggle svg { width: 20px; height: 20px; }
+
+  /* затемнение под сайдбаром */
+  .sidebar-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.55);
+    z-index: 55;
+    opacity: 0;
+    transition: opacity .25s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .sidebar-overlay.show { display: block; opacity: 1; }
+
+  /* ============ САЙДБАР ============ */
+  .sidebar {
+    width: 272px;
+    flex-shrink: 0;
+    background: var(--panel);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    transition: transform .25s cubic-bezier(.4,0,.2,1);
+    z-index: 60;
+  }
+  .sidebar-head {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border-soft);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 52px;
+  }
+  .sidebar-head .logo {
+    width: 26px; height: 26px;
+    border-radius: 7px;
+    background: var(--accent);
+    display: grid;
+    place-items: center;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+  .sidebar-head .title {
+    font-weight: 600;
+    font-size: 14px;
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .sidebar-head .btn-icon {
+    background: transparent;
+    border: none;
     color: var(--muted);
     cursor: pointer;
+    padding: 5px;
+    border-radius: 6px;
     font-size: 14px;
-    transition: .15s;
+    line-height: 1;
+    transition: background .12s, color .12s;
   }
-  .tab.active {
-    background: var(--accent);
-    color: #fff;
-    border-color: var(--accent);
-  }
-  main { padding: 16px; max-width: 900px; margin: 0 auto; }
-  .panel { display: none; }
-  .panel.active { display: block; }
+  .sidebar-head .btn-icon:hover { background: var(--panel2); color: var(--text); }
 
-  input, select, button, textarea {
-    font-family: inherit;
-    font-size: 14px;
+  .sidebar-close {
+    display: none;
+    background: transparent;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    padding: 5px;
+    border-radius: 6px;
+    line-height: 1;
+    align-items: center;
+    justify-content: center;
   }
-  input, select, textarea {
+  .sidebar-close:hover { background: var(--panel2); color: var(--text); }
+  .sidebar-close svg { width: 16px; height: 16px; }
+
+  .tree { flex: 1; overflow-y: auto; padding: 8px 6px 12px; }
+
+  .tree-empty {
+    color: var(--muted-2);
+    font-size: 13px;
+    text-align: center;
+    padding: 30px 16px;
+    letter-spacing: .05em;
+  }
+
+  .tree-row {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 8px 10px;
+    cursor: pointer;
+    border-radius: 7px;
+    margin-bottom: 1px;
+    user-select: none;
+    font-size: 13.5px;
+    color: var(--text);
+    transition: background .12s, color .12s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .tree-row:hover { background: var(--panel2); }
+  .tree-row.active { background: var(--accent); color: #fff; }
+  .tree-row.active .name { color: #fff; }
+  .tree-row.active .chev { color: rgba(255,255,255,.9); }
+  .tree-row.active .mini { color: rgba(255,255,255,.85); }
+  .tree-row.active .mini:hover { background: rgba(255,255,255,.2); color: #fff; }
+  .tree-row.system .name { color: var(--muted); }
+  .tree-row.system.active .name { color: #fff; }
+
+  .tree-row .chev {
+    width: 12px; height: 12px;
+    flex-shrink: 0;
+    display: grid;
+    place-items: center;
+    color: var(--muted);
+    transition: transform .15s;
+  }
+  .tree-row .chev svg { width: 9px; height: 9px; }
+  .tree-row .chev.open { transform: rotate(90deg); }
+  .tree-row .chev.empty { opacity: 0; }
+
+  .tree-row .name {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .tree-row .actions { display: none; gap: 1px; flex-shrink: 0; }
+  .tree-row:hover .actions { display: flex; }
+  /* на тач-устройствах показываем всегда */
+  @media (hover: none) {
+    .tree-row .actions { display: flex; }
+  }
+
+  .tree-row .mini {
+    background: transparent;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    padding: 3px 5px;
+    font-size: 11px;
+    border-radius: 4px;
+    line-height: 1;
+    display: grid;
+    place-items: center;
+    min-width: 18px;
+    height: 18px;
+    font-family: inherit;
+    transition: background .12s, color .12s;
+  }
+  .tree-row .mini:hover { background: var(--panel3); color: var(--text); }
+
+  .sidebar-foot {
+    padding: 10px;
+    border-top: 1px solid var(--border-soft);
+    display: grid;
+    grid-template-columns: 1fr 1fr auto auto;
+    gap: 5px;
+  }
+
+  /* ============ КОНТЕНТ ============ */
+  .content { flex: 1; overflow-y: auto; padding: 26px 30px 60px; }
+
+  .content-head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .content-head h2 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 650;
+    letter-spacing: -.02em;
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .content-head-actions { display: flex; gap: 5px; flex-shrink: 0; }
+
+  .placeholder {
+    display: grid;
+    place-items: center;
+    min-height: 55vh;
+    color: var(--muted-2);
+    font-size: 14px;
+    letter-spacing: .08em;
+  }
+
+  /* --- загрузчик --- */
+  .loader-wrap { max-width: 680px; margin: 32px auto 0; }
+  .loader {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 28px 26px 24px;
+    box-shadow: var(--shadow-md);
+  }
+  .loader-title {
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+  .loader-hint {
+    color: var(--muted);
+    font-size: 12.5px;
+    margin-bottom: 18px;
+    line-height: 1.55;
+  }
+  .loader-hint code {
+    background: var(--panel2);
+    padding: 1px 5px;
+    border-radius: 4px;
+    font-family: ui-monospace, Menlo, monospace;
+    font-size: 11.5px;
+    color: var(--accent);
+    border: 1px solid var(--border-soft);
+  }
+  .loader-actions { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+  .loader-divider {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--muted-2);
+    font-size: 11px;
+    margin: 16px 0;
+    text-transform: uppercase;
+    letter-spacing: .12em;
+    font-weight: 500;
+  }
+  .loader-divider::before,
+  .loader-divider::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--border-soft);
+  }
+  .loader textarea {
+    width: 100%;
+    min-height: 160px;
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: 12px;
+    line-height: 1.55;
     background: var(--panel2);
     border: 1px solid var(--border);
     color: var(--text);
-    padding: 9px 11px;
-    border-radius: 8px;
+    padding: 12px;
+    border-radius: 10px;
+    resize: vertical;
+    margin-bottom: 10px;
     outline: none;
-    width: 100%;
+    transition: border-color .15s, box-shadow .15s;
   }
-  input:focus, select:focus, textarea:focus { border-color: var(--accent); }
-  textarea { resize: vertical; min-height: 90px; font-family: ui-monospace, Menlo, monospace; font-size: 13px; }
+  .loader textarea:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+  }
+  .format-chips { display: flex; gap: 6px; margin-bottom: 12px; }
+  .format-chip {
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--muted);
+    background: var(--panel2);
+    border: 1px solid var(--border-soft);
+    letter-spacing: .04em;
+    text-transform: uppercase;
+  }
+  .format-chip.active {
+    background: var(--accent-soft);
+    color: var(--accent);
+    border-color: var(--accent);
+  }
 
-  .row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
-  .row > * { flex: 1; min-width: 120px; }
+  /* --- JSON-рендер --- */
+  .item {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 18px;
+    margin-bottom: 12px;
+    box-shadow: var(--shadow-sm);
+  }
+  .item.heading {
+    background: transparent;
+    border: none;
+    padding: 22px 0 4px;
+    font-size: 17px;
+    font-weight: 650;
+    box-shadow: none;
+    margin-bottom: 4px;
+  }
+  .item-title {
+    font-weight: 600;
+    font-size: 13px;
+    margin-bottom: 10px;
+  }
+  .item-body { font-size: 13.5px; }
+  .item-body.note {
+    white-space: pre-wrap;
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.6;
+    font-family: ui-monospace, Menlo, monospace;
+  }
+  .item iframe {
+    display: block;
+    width: 100%;
+    border: 0;
+    border-radius: 10px;
+    background: var(--panel2);
+  }
+  .item img { max-width: 100%; border-radius: 10px; display: block; }
 
+  .links-list { display: flex; flex-direction: column; gap: 4px; }
+  .link-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 12px;
+    border-radius: 8px;
+    background: var(--panel2);
+    color: var(--text);
+    text-decoration: none;
+    border: 1px solid transparent;
+    font-size: 13.5px;
+    transition: border-color .15s, background .15s;
+  }
+  .link-row:hover { border-color: var(--accent); background: var(--accent-soft); }
+  .link-row .link-name { font-weight: 500; }
+  .link-row .link-url {
+    margin-left: auto;
+    color: var(--muted);
+    font-size: 11.5px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 45%;
+    font-family: ui-monospace, Menlo, monospace;
+  }
+
+  .html-frame {
+    width: 100%;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: transparent;
+    box-shadow: var(--shadow-sm);
+    min-height: 400px;
+    display: block;
+  }
+
+  /* ============ СИСТЕМНЫЕ ============ */
+  .sys-section {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    margin-bottom: 14px;
+    box-shadow: var(--shadow-sm);
+  }
+  .sys-section-title {
+    font-size: 13px;
+    font-weight: 650;
+    margin-bottom: 4px;
+  }
+  .sys-section-hint {
+    font-size: 12.5px;
+    color: var(--muted);
+    margin-bottom: 14px;
+    line-height: 1.55;
+  }
+  .sys-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+
+  .sys-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .sys-table th {
+    text-align: left;
+    font-weight: 600;
+    font-size: 11px;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--muted-2);
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--border-soft);
+  }
+  .sys-table td {
+    padding: 10px;
+    border-bottom: 1px solid var(--border-soft);
+    vertical-align: middle;
+  }
+  .sys-table tr:last-child td { border-bottom: none; }
+  .sys-table .name-cell { font-weight: 500; }
+  .sys-table .path {
+    color: var(--muted-2);
+    font-size: 11.5px;
+    margin-left: 6px;
+    font-family: ui-monospace, Menlo, monospace;
+  }
+  .sys-table .size {
+    color: var(--muted);
+    font-size: 11.5px;
+    font-family: ui-monospace, Menlo, monospace;
+    white-space: nowrap;
+  }
+  .sys-table .row-actions { display: flex; gap: 4px; justify-content: flex-end; }
+  .sys-empty {
+    color: var(--muted-2);
+    font-size: 13px;
+    text-align: center;
+    padding: 24px;
+    letter-spacing: .05em;
+  }
+
+  .sys-stat {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 10px;
+  }
+  .sys-stat-cell {
+    background: var(--panel2);
+    border: 1px solid var(--border-soft);
+    border-radius: 10px;
+    padding: 12px 14px;
+  }
+  .sys-stat-label {
+    font-size: 11px;
+    color: var(--muted-2);
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .sys-stat-value {
+    font-size: 18px;
+    font-weight: 650;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .sys-radio-group { display: flex; gap: 6px; flex-wrap: wrap; }
+  .sys-radio {
+    padding: 8px 14px;
+    border-radius: 8px;
+    background: var(--panel2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    cursor: pointer;
+    font-size: 13px;
+    font-family: inherit;
+    transition: border-color .15s, background .15s;
+  }
+  .sys-radio:hover { border-color: var(--muted-2); }
+  .sys-radio.active {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-weight: 550;
+  }
+
+  .sys-danger {
+    border-color: var(--danger);
+    background: var(--danger-soft);
+  }
+
+  /* --- кнопки --- */
   .btn {
     background: var(--accent);
     color: #fff;
     border: none;
-    padding: 9px 14px;
+    padding: 8px 14px;
     border-radius: 8px;
     cursor: pointer;
-    font-weight: 500;
+    font-weight: 550;
+    font-size: 13px;
     white-space: nowrap;
+    font-family: inherit;
+    transition: background .15s, opacity .15s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
   }
-  .btn:hover { opacity: .9; }
+  .btn:hover { background: var(--accent-hover); }
+  .btn:disabled { opacity: .4; cursor: not-allowed; }
   .btn.ghost {
     background: var(--panel2);
     color: var(--text);
     border: 1px solid var(--border);
   }
+  .btn.ghost:hover { background: var(--panel3); border-color: var(--muted-2); }
   .btn.danger { background: var(--danger); }
-  .btn.small { padding: 5px 9px; font-size: 12px; }
+  .btn.danger:hover { filter: brightness(1.08); }
+  .btn.small { padding: 5px 10px; font-size: 11.5px; border-radius: 6px; }
+  .btn.icon { padding: 5px; min-width: 26px; height: 26px; }
 
-  .toolbar {
-    display: flex;
-    gap: 8px;
-    margin-bottom: 16px;
-    flex-wrap: wrap;
-  }
-  .toolbar input { flex: 1; }
-
-  .category-title {
-    font-size: 12px;
-    text-transform: uppercase;
-    letter-spacing: .08em;
-    color: var(--muted);
-    margin: 20px 0 8px;
-  }
-
-  .link-card {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 10px 12px;
-    margin-bottom: 6px;
-  }
-  .link-card a {
-    color: var(--text);
-    text-decoration: none;
-    flex: 1;
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-  .link-card a:hover { color: var(--accent); }
-  .link-card .url {
-    font-size: 12px;
-    color: var(--muted);
-    display: block;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  .link-card .actions { display: flex; gap: 4px; }
-
-  .clip-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-    gap: 8px;
-  }
-  .clip-btn {
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 14px 12px;
-    color: var(--text);
-    cursor: pointer;
-    text-align: left;
-    transition: .15s;
-    position: relative;
-    overflow: hidden;
-  }
-  .clip-btn:hover { border-color: var(--accent); }
-  .clip-btn.copied {
-    border-color: var(--accent2);
-    background: rgba(34,197,94,.1);
-  }
-  .clip-btn .label {
-    font-weight: 600;
-    display: block;
-    margin-bottom: 4px;
-    font-size: 14px;
-  }
-  .clip-btn .value {
-    font-size: 12px;
-    color: var(--muted);
-    font-family: ui-monospace, "SF Mono", Menlo, monospace;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    display: block;
-  }
-  .clip-btn .copied-badge {
-    position: absolute;
-    top: 8px;
-    right: 8px;
-    font-size: 11px;
-    color: var(--accent2);
-    opacity: 0;
-    transition: .2s;
-  }
-  .clip-btn.copied .copied-badge { opacity: 1; }
-  .clip-actions {
-    display: flex;
-    gap: 4px;
-    margin-top: 8px;
-    justify-content: flex-end;
-  }
-
-  /* ============ БЛОКИ ============ */
-  .block-card {
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 14px;
-    margin-bottom: 14px;
-  }
-  .block-head {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 12px;
-  }
-  .block-title {
-    font-weight: 600;
-    font-size: 15px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-  .block-actions { display: flex; gap: 4px; flex-shrink: 0; }
-  .block-body { font-size: 14px; }
-  .block-body .btn { padding: 7px 12px; }
-
-  .empty {
-    color: var(--muted);
-    text-align: center;
-    padding: 40px 20px;
-    font-size: 14px;
-  }
-
+  /* --- toast --- */
   .toast {
     position: fixed;
-    bottom: 20px;
+    bottom: 22px;
     left: 50%;
-    transform: translateX(-50%) translateY(80px);
-    background: var(--accent2);
-    color: #fff;
-    padding: 10px 18px;
-    border-radius: 10px;
-    font-size: 14px;
-    transition: .25s;
-    z-index: 100;
-    pointer-events: none;
-  }
-  .toast.show { transform: translateX(-50%) translateY(0); }
-
-  details.add-form {
-    margin-bottom: 16px;
+    transform: translateX(-50%) translateY(100px);
     background: var(--panel);
-    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 10px 16px;
     border-radius: 10px;
-    padding: 12px;
+    font-size: 13px;
+    transition: transform .25s cubic-bezier(.4,0,.2,1), opacity .25s;
+    z-index: 1000;
+    pointer-events: none;
+    box-shadow: var(--shadow-lg);
+    border: 1px solid var(--border);
+    font-weight: 500;
+    opacity: 0;
   }
-  details.add-form summary {
-    cursor: pointer;
-    color: var(--muted);
-    font-size: 14px;
-    user-select: none;
-  }
-  details.add-form[open] summary { margin-bottom: 12px; }
+  .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
 
-  @media (max-width: 500px) {
-    .link-card .actions { flex-direction: column; }
-    main { padding: 12px; }
-    .header-actions { width: 100%; }
-    .header-actions .btn { flex: 1; }
+  /* ============ МОБИЛКА ============ */
+  @media (max-width: 800px) {
+    .menu-toggle { display: flex; }
+
+    .sidebar {
+      position: fixed;
+      top: 0; left: 0; bottom: 0;
+      transform: translateX(-100%);
+      box-shadow: var(--shadow-lg);
+      width: 84vw;
+      max-width: 320px;
+    }
+    .sidebar.open { transform: translateX(0); }
+
+    .sidebar-close { display: flex; }
+
+    .content { padding: 68px 14px 60px; }
+    .content-head h2 { font-size: 17px; }
+    .sidebar-foot { grid-template-columns: 1fr 1fr; }
+    .sys-table .path { display: none; }
+    .sys-table th:nth-child(2),
+    .sys-table td:nth-child(2) { display: none; }
   }
 </style>
 </head>
 <body>
 
-<header>
-  <h1>🧰 Мой дашборд</h1>
-  <div class="header-row">
-    <div class="tabs">
-      <button class="tab active" data-tab="links">Ссылки</button>
-      <button class="tab" data-tab="clips">Быстрый буфер</button>
-      <button class="tab" data-tab="blocks">Блоки</button>
+<div class="app">
+
+  <button class="menu-toggle" id="menuToggle" title="Меню" aria-label="Меню">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+  </button>
+
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-head">
+      <div class="logo">P</div>
+      <span class="title" id="brandTitle">Панель</span>
+      <button class="btn-icon" id="themeToggle" title="Тема">◐</button>
+      <button class="sidebar-close" id="sidebarClose" title="Закрыть" aria-label="Закрыть">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
     </div>
-    <div class="header-actions">
-      <button class="btn small ghost" id="themeToggle" title="Переключить тему">🌙</button>
-      <button class="btn small ghost" id="exportAll" title="Скачать dashboard.json">⬇ Экспорт</button>
-      <button class="btn small ghost" id="importAll" title="Загрузить dashboard.json">⬆ Импорт</button>
-      <input type="file" id="importAllFile" accept=".json" hidden>
+    <div class="tree" id="tree"></div>
+    <div class="sidebar-foot">
+      <button class="btn ghost small" id="addRootTab">Вкладка</button>
+      <button class="btn ghost small" id="addRootFolder">Папка</button>
+      <button class="btn ghost small icon" id="exportAll" title="Экспорт">↓</button>
+      <button class="btn ghost small icon" id="importAll" title="Импорт">↑</button>
     </div>
-  </div>
-</header>
+  </aside>
 
-<main>
+  <main class="content" id="content"></main>
 
-  <!-- ================= ССЫЛКИ ================= -->
-  <section class="panel active" id="panel-links">
-    <div class="toolbar">
-      <input type="search" id="search" placeholder="🔍 Поиск по ссылкам...">
-    </div>
-    <details class="add-form">
-      <summary>➕ Добавить ссылку</summary>
-      <div class="row">
-        <input type="text" id="linkTitle" placeholder="Название">
-        <input type="text" id="linkUrl" placeholder="https://...">
-      </div>
-      <div class="row">
-        <input type="text" id="linkCat" placeholder="Категория" list="catList">
-        <datalist id="catList"></datalist>
-        <button class="btn" id="addLink">Добавить</button>
-      </div>
-    </details>
-    <div id="linksList"></div>
-  </section>
+</div>
 
-  <!-- ================= БУФЕР ================= -->
-  <section class="panel" id="panel-clips">
-    <details class="add-form">
-      <summary>➕ Добавить в буфер</summary>
-      <div class="row">
-        <input type="text" id="clipLabel" placeholder="Название">
-      </div>
-      <div class="row">
-        <input type="text" id="clipValue" placeholder="Значение">
-        <button class="btn" id="addClip">Добавить</button>
-      </div>
-    </details>
-    <div class="clip-grid" id="clipsList"></div>
-  </section>
-
-  <!-- ================= БЛОКИ ================= -->
-  <section class="panel" id="panel-blocks">
-    <details class="add-form">
-      <summary>➕ Добавить блок</summary>
-      <div class="row">
-        <input type="text" id="blockName" placeholder="Название блока">
-      </div>
-      <div style="margin-bottom:12px">
-        <textarea id="blockCode" placeholder="// Код получает переменную el — DOM-контейнер блока
-// Пример:
-el.innerHTML = '&lt;button class=&quot;btn&quot;&gt;Привет&lt;/button&gt;';
-el.querySelector('button').onclick = () =&gt; alert('Работает!');"></textarea>
-      </div>
-      <div class="row">
-        <button class="btn" id="addBlock">Добавить блок</button>
-      </div>
-    </details>
-    <div id="blocksList"></div>
-  </section>
-
-</main>
-
-<div class="toast" id="toast">Скопировано</div>
+<div class="toast" id="toast"></div>
 
 <script>
 (() => {
@@ -381,12 +680,23 @@ el.querySelector('button').onclick = () =&gt; alert('Работает!');"></tex
   const $ = (s) => document.querySelector(s);
   const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 
+  const SYS_FOLDER_ID = "__sys__";
+  const SYS_TABS = [
+    { id: "__sys_save__",     name: "Менеджер сохранения", systemType: "save" },
+    { id: "__sys_settings__", name: "Настройки",           systemType: "settings" },
+  ];
+
+  const escapeHtml = (s) =>
+    String(s).replace(/[&<>"']/g, (c) => ({
+      "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+    }[c]));
+
   const toast = (msg) => {
     const t = $("#toast");
     t.textContent = msg;
     t.classList.add("show");
     clearTimeout(t._timer);
-    t._timer = setTimeout(() => t.classList.remove("show"), 1500);
+    t._timer = setTimeout(() => t.classList.remove("show"), 1600);
   };
 
   const load = (key, fallback) => {
@@ -395,264 +705,974 @@ el.querySelector('button').onclick = () =&gt; alert('Работает!');"></tex
   };
   const save = (key, val) => localStorage.setItem(key, JSON.stringify(val));
 
-  const escapeHtml = (s) =>
-    String(s).replace(/[&<>"']/g, (c) => ({
-      "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
-    }[c]));
+  const formatBytes = (b) => {
+    if (b < 1024) return b + " B";
+    if (b < 1024 * 1024) return (b / 1024).toFixed(1) + " KB";
+    return (b / 1024 / 1024).toFixed(2) + " MB";
+  };
 
-  async function copyText(text) {
-    try { await navigator.clipboard.writeText(text); return true; }
-    catch {
-      const ta = document.createElement("textarea");
-      ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0";
-      document.body.appendChild(ta); ta.select();
-      const ok = document.execCommand("copy");
-      document.body.removeChild(ta); return ok;
-    }
+  // ================== САЙДБАР НА МОБИЛКЕ ==================
+  const isMobile = () => window.matchMedia("(max-width: 800px)").matches;
+
+  function openSidebar() {
+    $("#sidebar").classList.add("open");
+    $("#sidebarOverlay").classList.add("show");
   }
+  function closeSidebar() {
+    $("#sidebar").classList.remove("open");
+    $("#sidebarOverlay").classList.remove("show");
+  }
+  function toggleSidebar() {
+    if ($("#sidebar").classList.contains("open")) closeSidebar();
+    else openSidebar();
+  }
+
+  $("#menuToggle").onclick = toggleSidebar;
+  $("#sidebarClose").onclick = closeSidebar;
+  $("#sidebarOverlay").onclick = closeSidebar;
+
+  // свайп влево — закрыть сайдбар
+  (() => {
+    let sx = 0, sy = 0, tracking = false;
+    const sb = $("#sidebar");
+    sb.addEventListener("touchstart", (e) => {
+      if (!isMobile()) return;
+      if (!sb.classList.contains("open")) return;
+      const t = e.touches[0];
+      sx = t.clientX; sy = t.clientY; tracking = true;
+    }, { passive: true });
+    sb.addEventListener("touchmove", (e) => {
+      if (!tracking) return;
+      const t = e.touches[0];
+      const dx = t.clientX - sx;
+      const dy = t.clientY - sy;
+      if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) && dx < 0) {
+        closeSidebar();
+        tracking = false;
+      }
+    }, { passive: true });
+    sb.addEventListener("touchend", () => { tracking = false; }, { passive: true });
+  })();
+
+  // закрывать при смене размера на десктоп
+  window.addEventListener("resize", () => {
+    if (!isMobile()) closeSidebar();
+  });
+
+  // Esc закрывает
+  window.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") closeSidebar();
+  });
 
   // ================== ТЕМА ==================
   function applyTheme(theme) {
     document.documentElement.dataset.theme = theme;
-    $("#themeToggle").textContent = theme === "dark" ? "🌙" : "☀️";
   }
-  let currentTheme = localStorage.getItem("dashboard.theme") || "dark";
+  let currentTheme = localStorage.getItem("portal.theme") || "dark";
   applyTheme(currentTheme);
   $("#themeToggle").onclick = () => {
     currentTheme = currentTheme === "dark" ? "light" : "dark";
-    localStorage.setItem("dashboard.theme", currentTheme);
+    localStorage.setItem("portal.theme", currentTheme);
     applyTheme(currentTheme);
+    renderContent();
   };
 
-  // ================== ВКЛАДКИ ==================
-  document.querySelectorAll(".tab").forEach((tab) => {
-    tab.addEventListener("click", () => {
-      document.querySelectorAll(".tab").forEach((t) => t.classList.remove("active"));
-      document.querySelectorAll(".panel").forEach((p) => p.classList.remove("active"));
-      tab.classList.add("active");
-      $("#panel-" + tab.dataset.tab).classList.add("active");
-    });
+  // ================== ДАННЫЕ ==================
+  let tree = load("portal.tree", []);
+  let activeId = localStorage.getItem("portal.active") || null;
+
+  const saveTree = () => save("portal.tree", tree);
+  const setActive = (id) => {
+    activeId = id;
+    if (id) localStorage.setItem("portal.active", id);
+    else localStorage.removeItem("portal.active");
+  };
+
+  function findNode(id, list = tree) {
+    for (const item of list) {
+      if (item.id === id) return item;
+      if (item.children) {
+        const found = findNode(id, item.children);
+        if (found) return found;
+      }
+    }
+    return null;
+  }
+
+  function removeNode(id, list = tree) {
+    for (let i = 0; i < list.length; i++) {
+      if (list[i].id === id) {
+        list.splice(i, 1);
+        if (activeId === id) setActive(null);
+        saveTree();
+        renderTree();
+        renderContent();
+        return true;
+      }
+      if (list[i].children && removeNode(id, list[i].children)) return true;
+    }
+    return false;
+  }
+
+  function ensureSystem() {
+    let sys = tree.find((x) => x.id === SYS_FOLDER_ID);
+    if (!sys) {
+      sys = {
+        id: SYS_FOLDER_ID,
+        type: "folder",
+        name: "Системные",
+        open: false,
+        system: true,
+        children: SYS_TABS.map((t) => ({
+          id: t.id,
+          type: "tab",
+          name: t.name,
+          system: true,
+          systemType: t.systemType,
+        })),
+      };
+      tree.unshift(sys);
+      saveTree();
+    } else {
+      sys.system = true;
+      sys.type = "folder";
+      sys.children = sys.children || [];
+      SYS_TABS.forEach((t) => {
+        const existing = sys.children.find((c) => c.id === t.id);
+        if (existing) {
+          existing.name = t.name;
+          existing.type = "tab";
+          existing.system = true;
+          existing.systemType = t.systemType;
+        } else {
+          sys.children.push({
+            id: t.id,
+            type: "tab",
+            name: t.name,
+            system: true,
+            systemType: t.systemType,
+          });
+        }
+      });
+      const idx = tree.indexOf(sys);
+      if (idx > 0) {
+        tree.splice(idx, 1);
+        tree.unshift(sys);
+      }
+    }
+  }
+
+  function stripSystem(list) {
+    return list.filter((x) => !x.system).map((x) =>
+      x.children ? { ...x, children: stripSystem(x.children) } : x
+    );
+  }
+
+  function flattenTabs(list, path = []) {
+    let out = [];
+    for (const item of list) {
+      if (item.system) continue;
+      if (item.type === "tab") {
+        out.push({ tab: item, path: path.slice() });
+      } else if (item.type === "folder" && item.children) {
+        out.push(...flattenTabs(item.children, [...path, item.name]));
+      }
+    }
+    return out;
+  }
+
+  // ================== ДЕРЕВО ==================
+  const CHEV_SVG = '<svg viewBox="0 0 12 12" fill="none"><path d="M4.5 2.5L8 6L4.5 9.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+  function mkMini(label, title, onClick) {
+    const b = document.createElement("button");
+    b.className = "mini";
+    b.textContent = label;
+    b.title = title;
+    b.onclick = (e) => { e.stopPropagation(); onClick(); };
+    return b;
+  }
+
+  function addChild(parentId, type) {
+    const parent = parentId ? findNode(parentId) : null;
+    if (parent && parent.system) return;
+    const list = parent ? (parent.children ||= []) : tree;
+    const name = prompt(type === "folder" ? "Название папки:" : "Название вкладки:",
+                        type === "folder" ? "Папка" : "Вкладка");
+    if (name === null) return;
+    const item = {
+      id: uid(),
+      type,
+      name: name.trim() || (type === "folder" ? "Папка" : "Вкладка"),
+    };
+    if (type === "folder") {
+      item.open = true;
+      item.children = [];
+    }
+    list.push(item);
+    if (parent) parent.open = true;
+    saveTree();
+    if (type === "tab") setActive(item.id);
+    renderTree();
+    if (type === "tab") renderContent();
+  }
+
+  function renderNode(item, depth) {
+    const wrap = document.createElement("div");
+
+    const row = document.createElement("div");
+    row.className = "tree-row";
+    if (item.system) row.classList.add("system");
+    row.style.paddingLeft = (8 + depth * 14) + "px";
+    if (item.type === "tab" && item.id === activeId) row.classList.add("active");
+
+    const chev = document.createElement("span");
+    chev.className = "chev";
+    chev.innerHTML = CHEV_SVG;
+    if (item.type === "folder" && item.open) chev.classList.add("open");
+    if (item.type === "tab") chev.classList.add("empty");
+    row.appendChild(chev);
+
+    const name = document.createElement("span");
+    name.className = "name";
+    name.textContent = item.name;
+    row.appendChild(name);
+
+    if (!item.system) {
+      const actions = document.createElement("span");
+      actions.className = "actions";
+      if (item.type === "folder") {
+        actions.appendChild(mkMini("+", "Вкладка в папке", () => addChild(item.id, "tab")));
+        actions.appendChild(mkMini("＋", "Папка внутри", () => addChild(item.id, "folder")));
+      }
+      actions.appendChild(mkMini("✎", "Переименовать", () => {
+        const n = prompt("Название:", item.name);
+        if (n === null) return;
+        item.name = n.trim() || item.name;
+        saveTree(); renderTree(); renderContent();
+      }));
+      actions.appendChild(mkMini("×", "Удалить", () => {
+        if (!confirm(`Удалить «${item.name}»?`)) return;
+        removeNode(item.id);
+      }));
+      row.appendChild(actions);
+    }
+
+    row.onclick = () => {
+      if (item.type === "folder") {
+        item.open = !item.open;
+        saveTree();
+        renderTree();
+      } else {
+        setActive(item.id);
+        renderTree();
+        renderContent();
+        if (isMobile()) closeSidebar();
+      }
+    };
+
+    wrap.appendChild(row);
+
+    if (item.type === "folder" && item.open && item.children) {
+      item.children.forEach((child) => wrap.appendChild(renderNode(child, depth + 1)));
+    }
+    return wrap;
+  }
+
+  function renderTree() {
+    const root = $("#tree");
+    root.innerHTML = "";
+    if (!tree.length) {
+      const empty = document.createElement("div");
+      empty.className = "tree-empty";
+      empty.textContent = "...";
+      root.appendChild(empty);
+      return;
+    }
+    tree.forEach((item) => root.appendChild(renderNode(item, 0)));
+  }
+
+  // ================== КОНТЕНТ ==================
+  function renderContent() {
+    const c = $("#content");
+    c.innerHTML = "";
+
+    if (!activeId) {
+      const p = document.createElement("div");
+      p.className = "placeholder";
+      p.textContent = "...";
+      c.appendChild(p);
+      return;
+    }
+
+    const tab = findNode(activeId);
+    if (!tab || tab.type !== "tab") {
+      const p = document.createElement("div");
+      p.className = "placeholder";
+      p.textContent = "...";
+      c.appendChild(p);
+      return;
+    }
+
+    if (tab.systemType) {
+      renderSystemTab(tab, c);
+      return;
+    }
+
+    if (!tab.content) {
+      renderLoader(tab, c);
+    } else {
+      renderTabContent(tab, c);
+    }
+  }
+
+  function renderLoader(tab, container) {
+    const wrap = document.createElement("div");
+    wrap.className = "loader-wrap";
+    wrap.innerHTML = `
+      <div class="loader">
+        <div class="loader-title">${escapeHtml(tab.name)}</div>
+        <div class="loader-hint">
+          Загрузи <code>HTML</code> или <code>JSON</code>. Тип определится автоматически.
+        </div>
+        <div class="loader-actions">
+          <button class="btn" id="pickFile">Выбрать файл</button>
+        </div>
+        <div class="loader-divider">или вставь текст</div>
+        <textarea id="pasteArea" placeholder="&lt;h1&gt;Привет&lt;/h1&gt;
+или
+{
+  &quot;title&quot;: &quot;Вкладка&quot;,
+  &quot;items&quot;: [ ... ]
+}"></textarea>
+        <div class="format-chips">
+          <span class="format-chip" id="chipHtml">HTML</span>
+          <span class="format-chip" id="chipJson">JSON</span>
+        </div>
+        <button class="btn" id="applyPaste">Применить</button>
+      </div>
+    `;
+    container.appendChild(wrap);
+
+    const ta = wrap.querySelector("#pasteArea");
+    const chipHtml = wrap.querySelector("#chipHtml");
+    const chipJson = wrap.querySelector("#chipJson");
+
+    function detect(text) {
+      const t = text.trim();
+      if (!t) return null;
+      if (t.startsWith("{") || t.startsWith("[")) {
+        try { JSON.parse(t); return "json"; } catch {}
+      }
+      return "html";
+    }
+
+    function updateChips() {
+      const kind = detect(ta.value);
+      chipHtml.classList.toggle("active", kind === "html");
+      chipJson.classList.toggle("active", kind === "json");
+    }
+    ta.addEventListener("input", updateChips);
+
+    const apply = (text) => {
+      const kind = detect(text);
+      if (!kind) { toast("Пусто"); return; }
+      if (kind === "json") {
+        try { JSON.parse(text); }
+        catch (e) { toast("JSON: " + e.message); return; }
+      }
+      tab.content = text;
+      saveTree();
+      renderContent();
+      toast(kind.toUpperCase() + " загружен");
+    };
+
+    wrap.querySelector("#pickFile").onclick = () => {
+      const inp = document.createElement("input");
+      inp.type = "file";
+      inp.accept = ".html,.htm,.json,text/html,application/json";
+      inp.onchange = () => {
+        const f = inp.files[0];
+        if (!f) return;
+        const r = new FileReader();
+        r.onload = () => apply(r.result);
+        r.readAsText(f);
+      };
+      inp.click();
+    };
+
+    wrap.querySelector("#applyPaste").onclick = () => apply(ta.value);
+    updateChips();
+  }
+
+  function renderTabContent(tab, container) {
+    const raw = tab.content;
+    const trimmed = raw.trim();
+    let kind = "html";
+    let parsed = null;
+    if (trimmed.startsWith("{") || trimmed.startsWith("[")) {
+      try { parsed = JSON.parse(trimmed); kind = "json"; } catch {}
+    }
+
+    const head = document.createElement("div");
+    head.className = "content-head";
+    const h2 = document.createElement("h2");
+    h2.textContent = (parsed && parsed.title) || tab.name;
+    head.appendChild(h2);
+
+    const actions = document.createElement("div");
+    actions.className = "content-head-actions";
+
+    const reload = document.createElement("button");
+    reload.className = "btn ghost small icon";
+    reload.textContent = "↻";
+    reload.title = "Перезапустить";
+    reload.onclick = () => renderContent();
+    actions.appendChild(reload);
+
+    const change = document.createElement("button");
+    change.className = "btn ghost small icon";
+    change.textContent = "⌫";
+    change.title = "Сбросить конфиг";
+    change.onclick = () => {
+      if (!confirm("Сбросить содержимое?")) return;
+      delete tab.content;
+      saveTree();
+      renderContent();
+    };
+    actions.appendChild(change);
+
+    head.appendChild(actions);
+    container.appendChild(head);
+
+    if (kind === "html") {
+      renderHtmlContent(raw, container, tab);
+    } else {
+      renderJsonContent(parsed, container);
+    }
+  }
+
+  function renderHtmlContent(html, container, tab) {
+    const iframe = document.createElement("iframe");
+    iframe.className = "html-frame";
+    iframe.setAttribute("sandbox", "allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox");
+    iframe.dataset.portalId = tab.id;
+
+    const styles = getComputedStyle(document.documentElement);
+    const vars = [
+      "--bg", "--panel", "--panel2", "--panel3", "--border", "--border-soft",
+      "--text", "--muted", "--muted-2", "--accent", "--accent-soft",
+      "--accent-hover", "--danger"
+    ].map(v => `${v}: ${styles.getPropertyValue(v).trim()};`).join(" ");
+
+    const theme = document.documentElement.dataset.theme || "dark";
+
+    const srcdoc = `<!DOCTYPE html>
+<html lang="ru" data-theme="${theme}">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  :root { ${vars} }
+  html, body {
+    margin: 0;
+    background: transparent;
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Inter", Roboto, sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  body { padding: 18px; }
+  a { color: var(--accent); }
+  code, pre {
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    background: var(--panel2);
+    border-radius: 6px;
+    padding: 2px 6px;
+    font-size: .9em;
+  }
+  pre { padding: 12px; overflow-x: auto; }
+  button {
+    font-family: inherit; font-size: inherit;
+    background: var(--accent); color: #fff;
+    border: none; border-radius: 8px;
+    padding: 8px 14px; cursor: pointer;
+  }
+  button:hover { opacity: .9; }
+  input, textarea, select {
+    font-family: inherit; font-size: inherit;
+    background: var(--panel2); color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 8px; padding: 8px 11px;
+    outline: none;
+  }
+  input:focus, textarea:focus { border-color: var(--accent); }
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 8px; border: 2px solid transparent; background-clip: content-box; }
+</style>
+</head>
+<body>
+${html}
+<script>
+  (function() {
+    var lastH = 0;
+    function send() {
+      var h = Math.max(
+        document.body.scrollHeight, document.documentElement.scrollHeight,
+        document.body.offsetHeight, document.documentElement.offsetHeight
+      );
+      if (h !== lastH) {
+        lastH = h;
+        try { parent.postMessage({ type: 'portal-resize', id: '${tab.id}', height: h }, '*'); } catch(e) {}
+      }
+    }
+    try {
+      new ResizeObserver(send).observe(document.body);
+      window.addEventListener('load', send);
+      setTimeout(send, 50);
+      setTimeout(send, 300);
+    } catch(e) {}
+  })();
+<\/script>
+</body>
+</html>`;
+
+    iframe.srcdoc = srcdoc;
+    iframe.style.height = "400px";
+    container.appendChild(iframe);
+  }
+
+  window.addEventListener("message", (e) => {
+    const d = e.data;
+    if (!d || d.type !== "portal-resize" || !d.id) return;
+    const f = document.querySelector(`iframe[data-portal-id="${d.id}"]`);
+    if (!f) return;
+    const h = Math.max(200, Math.min(20000, d.height | 0));
+    f.style.height = h + "px";
   });
 
-  // ================== ССЫЛКИ ==================
-  let links = load("dashboard.links", []);
-
-  function renderLinks() {
-    const q = $("#search").value.trim().toLowerCase();
-    const list = $("#linksList");
-    const datalist = $("#catList");
-
-    const cats = [...new Set(links.map((l) => l.category).filter(Boolean))].sort();
-    datalist.innerHTML = cats.map((c) => `<option value="${escapeHtml(c)}">`).join("");
-
-    const filtered = q
-      ? links.filter((l) =>
-          (l.title + " " + l.url + " " + (l.category || "")).toLowerCase().includes(q))
-      : links;
-
-    if (!filtered.length) {
-      list.innerHTML = `<div class="empty">${q ? "Ничего не найдено" : "Пока нет ссылок"}</div>`;
+  function renderJsonContent(cfg, container) {
+    const items = Array.isArray(cfg.items) ? cfg.items : [];
+    if (!items.length) {
+      const p = document.createElement("div");
+      p.className = "placeholder";
+      p.textContent = "...";
+      container.appendChild(p);
       return;
     }
-
-    const groups = {};
-    filtered.forEach((l) => {
-      const c = l.category || "Без категории";
-      (groups[c] ||= []).push(l);
+    items.forEach((it) => {
+      const node = renderItem(it);
+      if (node) container.appendChild(node);
     });
+  }
 
-    let html = "";
-    Object.keys(groups).sort().forEach((cat) => {
-      html += `<div class="category-title">${escapeHtml(cat)}</div>`;
-      groups[cat].forEach((l) => {
-        html += `
-          <div class="link-card">
-            <a href="${escapeHtml(l.url)}" target="_blank" rel="noopener">
-              ${escapeHtml(l.title)}
-              <span class="url">${escapeHtml(l.url)}</span>
-            </a>
-            <div class="actions">
-              <button class="btn small ghost" data-copy="${l.id}" title="Скопировать ссылку">🔗</button>
-              <button class="btn small danger" data-del="${l.id}" title="Удалить">✕</button>
-            </div>
-          </div>`;
+  function renderItem(it) {
+    if (!it || typeof it !== "object") return null;
+
+    if (it.type === "heading") {
+      const el = document.createElement("div");
+      el.className = "item heading";
+      el.textContent = it.text || it.title || "";
+      return el;
+    }
+
+    const card = document.createElement("div");
+    card.className = "item";
+
+    if (it.title) {
+      const t = document.createElement("div");
+      t.className = "item-title";
+      t.textContent = it.title;
+      card.appendChild(t);
+    }
+
+    switch (it.type) {
+      case "html": {
+        const d = document.createElement("div");
+        d.className = "item-body";
+        d.innerHTML = it.html || "";
+        card.appendChild(d);
+        break;
+      }
+      case "note": {
+        const d = document.createElement("div");
+        d.className = "item-body note";
+        d.textContent = it.text || "";
+        card.appendChild(d);
+        break;
+      }
+      case "iframe": {
+        const f = document.createElement("iframe");
+        f.src = it.src || "about:blank";
+        f.style.height = (it.height || 240) + "px";
+        f.setAttribute("loading", "lazy");
+        if (it.allow) f.setAttribute("allow", it.allow);
+        card.appendChild(f);
+        break;
+      }
+      case "image": {
+        const img = document.createElement("img");
+        img.src = it.src || "";
+        img.alt = it.alt || "";
+        card.appendChild(img);
+        break;
+      }
+      case "links": {
+        const list = document.createElement("div");
+        list.className = "links-list";
+        (Array.isArray(it.items) ? it.items : []).forEach((l) => {
+          const a = document.createElement("a");
+          a.className = "link-row";
+          a.href = l.url || "#";
+          a.target = "_blank";
+          a.rel = "noopener";
+          const nm = document.createElement("span");
+          nm.className = "link-name";
+          nm.textContent = l.title || l.url || "";
+          a.appendChild(nm);
+          if (l.url) {
+            const u = document.createElement("span");
+            u.className = "link-url";
+            u.textContent = l.url;
+            a.appendChild(u);
+          }
+          list.appendChild(a);
+        });
+        card.appendChild(list);
+        break;
+      }
+      case "block": {
+        const body = document.createElement("div");
+        body.className = "item-body";
+        card.appendChild(body);
+        try {
+          const fn = new Function("el", it.code || "");
+          fn(body);
+        } catch (e) {
+          body.innerHTML =
+            '<div style="color:var(--danger);font-size:12.5px">Ошибка: ' +
+            escapeHtml(e.message) + "</div>";
+        }
+        break;
+      }
+      default:
+        return null;
+    }
+
+    return card;
+  }
+
+  function renderSystemTab(tab, container) {
+    const head = document.createElement("div");
+    head.className = "content-head";
+    const h2 = document.createElement("h2");
+    h2.textContent = tab.name;
+    head.appendChild(h2);
+    container.appendChild(head);
+
+    if (tab.systemType === "save") {
+      renderSaveManager(container);
+    } else if (tab.systemType === "settings") {
+      renderSettings(container);
+    }
+  }
+
+  function renderSaveManager(container) {
+    const s1 = document.createElement("div");
+    s1.className = "sys-section";
+    s1.innerHTML = `
+      <div class="sys-section-title">Общий бэкап</div>
+      <div class="sys-section-hint">Структура дерева и содержимое всех пользовательских вкладок. Системные вкладки в файл не попадают.</div>
+    `;
+    const a1 = document.createElement("div");
+    a1.className = "sys-actions";
+
+    const expAll = document.createElement("button");
+    expAll.className = "btn";
+    expAll.textContent = "Экспорт всего";
+    expAll.onclick = () => exportAll();
+    a1.appendChild(expAll);
+
+    const impAll = document.createElement("button");
+    impAll.className = "btn ghost";
+    impAll.textContent = "Импорт (заменить)";
+    impAll.onclick = () => importAll({ merge: false });
+    a1.appendChild(impAll);
+
+    const impMerge = document.createElement("button");
+    impMerge.className = "btn ghost";
+    impMerge.textContent = "Импорт (добавить)";
+    impMerge.onclick = () => importAll({ merge: true });
+    a1.appendChild(impMerge);
+
+    s1.appendChild(a1);
+    container.appendChild(s1);
+
+    const s2 = document.createElement("div");
+    s2.className = "sys-section";
+    const totalBytes = new Blob([JSON.stringify(localStorage)]).size;
+    const tabsFlat = flattenTabs(tree);
+    const withContent = tabsFlat.filter((x) => x.tab.content).length;
+    const totalContent = tabsFlat.reduce((sum, x) => sum + (x.tab.content ? x.tab.content.length : 0), 0);
+
+    s2.innerHTML = `
+      <div class="sys-section-title">Хранилище</div>
+      <div class="sys-section-hint">Оценка использования localStorage в этом браузере.</div>
+      <div class="sys-stat">
+        <div class="sys-stat-cell">
+          <div class="sys-stat-label">localStorage</div>
+          <div class="sys-stat-value">${formatBytes(totalBytes)}</div>
+        </div>
+        <div class="sys-stat-cell">
+          <div class="sys-stat-label">Вкладок</div>
+          <div class="sys-stat-value">${tabsFlat.length}</div>
+        </div>
+        <div class="sys-stat-cell">
+          <div class="sys-stat-label">С контентом</div>
+          <div class="sys-stat-value">${withContent}</div>
+        </div>
+        <div class="sys-stat-cell">
+          <div class="sys-stat-label">Контент</div>
+          <div class="sys-stat-value">${formatBytes(totalContent)}</div>
+        </div>
+      </div>
+    `;
+    container.appendChild(s2);
+
+    const s3 = document.createElement("div");
+    s3.className = "sys-section";
+    s3.innerHTML = `
+      <div class="sys-section-title">Вкладки</div>
+      <div class="sys-section-hint">Пофайловый экспорт и импорт контента. При импорте содержимое текущей вкладки будет заменено.</div>
+    `;
+
+    const list = flattenTabs(tree);
+    if (!list.length) {
+      const empty = document.createElement("div");
+      empty.className = "sys-empty";
+      empty.textContent = "Вкладок нет";
+      s3.appendChild(empty);
+    } else {
+      const table = document.createElement("table");
+      table.className = "sys-table";
+      table.innerHTML = `
+        <thead>
+          <tr>
+            <th>Вкладка</th>
+            <th style="width:90px">Размер</th>
+            <th style="width:200px"></th>
+          </tr>
+        </thead>
+      `;
+      const tbody = document.createElement("tbody");
+
+      list.forEach(({ tab, path }) => {
+        const tr = document.createElement("tr");
+
+        const tdName = document.createElement("td");
+        tdName.className = "name-cell";
+        tdName.innerHTML = escapeHtml(tab.name) +
+          (path.length ? `<span class="path">${escapeHtml(path.join(" / "))}</span>` : "");
+        tr.appendChild(tdName);
+
+        const tdSize = document.createElement("td");
+        tdSize.className = "size";
+        const bytes = tab.content ? new Blob([tab.content]).size : 0;
+        tdSize.textContent = bytes ? formatBytes(bytes) : "—";
+        tr.appendChild(tdSize);
+
+        const tdActions = document.createElement("td");
+        const rowActions = document.createElement("div");
+        rowActions.className = "row-actions";
+
+        const exp = document.createElement("button");
+        exp.className = "btn ghost small";
+        exp.textContent = "Экспорт";
+        exp.disabled = !tab.content;
+        exp.onclick = () => exportTab(tab);
+        rowActions.appendChild(exp);
+
+        const imp = document.createElement("button");
+        imp.className = "btn ghost small";
+        imp.textContent = "Импорт";
+        imp.onclick = () => importTab(tab);
+        rowActions.appendChild(imp);
+
+        const clr = document.createElement("button");
+        clr.className = "btn ghost small";
+        clr.textContent = "Очистить";
+        clr.disabled = !tab.content;
+        clr.onclick = () => {
+          if (!confirm(`Очистить содержимое вкладки «${tab.name}»?`)) return;
+          delete tab.content;
+          saveTree();
+          renderContent();
+          toast("Очищено");
+        };
+        rowActions.appendChild(clr);
+
+        tdActions.appendChild(rowActions);
+        tr.appendChild(tdActions);
+        tbody.appendChild(tr);
       });
-    });
-    list.innerHTML = html;
 
-    list.querySelectorAll("[data-del]").forEach((b) => {
+      table.appendChild(tbody);
+      s3.appendChild(table);
+    }
+    container.appendChild(s3);
+
+    const s4 = document.createElement("div");
+    s4.className = "sys-section sys-danger";
+    s4.innerHTML = `
+      <div class="sys-section-title">Опасная зона</div>
+      <div class="sys-section-hint">Действия необратимы. Перед этим лучше сделать экспорт всего.</div>
+    `;
+    const a4 = document.createElement("div");
+    a4.className = "sys-actions";
+
+    const clearContent = document.createElement("button");
+    clearContent.className = "btn ghost small";
+    clearContent.textContent = "Очистить содержимое вкладок";
+    clearContent.onclick = () => {
+      if (!confirm("Удалить содержимое всех вкладок? Структура дерева сохранится.")) return;
+      const flat = flattenTabs(tree);
+      flat.forEach(({ tab }) => { delete tab.content; });
+      saveTree();
+      renderContent();
+      toast("Содержимое очищено");
+    };
+    a4.appendChild(clearContent);
+
+    const clearAll = document.createElement("button");
+    clearAll.className = "btn danger small";
+    clearAll.textContent = "Сбросить всё";
+    clearAll.onclick = () => {
+      if (!confirm("Полный сброс: удалить дерево и всё содержимое? Системные вкладки останутся.")) return;
+      localStorage.removeItem("portal.tree");
+      localStorage.removeItem("portal.active");
+      tree = [];
+      activeId = null;
+      ensureSystem();
+      saveTree();
+      renderTree();
+      renderContent();
+      toast("Сброшено");
+    };
+    a4.appendChild(clearAll);
+
+    s4.appendChild(a4);
+    container.appendChild(s4);
+
+    function importTab(tab) {
+      const inp = document.createElement("input");
+      inp.type = "file";
+      inp.accept = ".html,.htm,.json,.txt,text/html,application/json,text/plain";
+      inp.onchange = () => {
+        const f = inp.files[0];
+        if (!f) return;
+        const r = new FileReader();
+        r.onload = () => {
+          tab.content = r.result;
+          saveTree();
+          renderContent();
+          toast(`Загружено в «${tab.name}»`);
+        };
+        r.readAsText(f);
+      };
+      inp.click();
+    }
+  }
+
+  function renderSettings(container) {
+    const s1 = document.createElement("div");
+    s1.className = "sys-section";
+    s1.innerHTML = `
+      <div class="sys-section-title">Тема</div>
+      <div class="sys-section-hint">Применяется ко всему порталу и передаётся во встроенные HTML-страницы.</div>
+    `;
+    const rg = document.createElement("div");
+    rg.className = "sys-radio-group";
+    ["dark", "light"].forEach((t) => {
+      const b = document.createElement("button");
+      b.className = "sys-radio" + (currentTheme === t ? " active" : "");
+      b.textContent = t === "dark" ? "Тёмная" : "Светлая";
       b.onclick = () => {
-        if (!confirm("Удалить ссылку?")) return;
-        links = links.filter((l) => l.id !== b.dataset.del);
-        save("dashboard.links", links); renderLinks();
+        currentTheme = t;
+        localStorage.setItem("portal.theme", currentTheme);
+        applyTheme(currentTheme);
+        renderContent();
       };
+      rg.appendChild(b);
     });
-    list.querySelectorAll("[data-copy]").forEach((b) => {
-      b.onclick = async () => {
-        const l = links.find((x) => x.id === b.dataset.copy);
-        if (!l) return;
-        (await copyText(l.url)) ? toast("Ссылка скопирована") : toast("Не удалось скопировать");
-      };
-    });
-  }
+    s1.appendChild(rg);
+    container.appendChild(s1);
 
-  $("#search").addEventListener("input", renderLinks);
-  $("#addLink").onclick = () => {
-    const title = $("#linkTitle").value.trim();
-    let url = $("#linkUrl").value.trim();
-    const category = $("#linkCat").value.trim();
-    if (!title || !url) return toast("Заполни название и URL");
-    if (!/^https?:\/\//i.test(url)) url = "https://" + url;
-    links.push({ id: uid(), title, url, category });
-    save("dashboard.links", links);
-    $("#linkTitle").value = $("#linkUrl").value = "";
-    renderLinks(); toast("Ссылка добавлена");
-  };
+    const s2 = document.createElement("div");
+    s2.className = "sys-section";
+    s2.innerHTML = `
+      <div class="sys-section-title">Название</div>
+      <div class="sys-section-hint">Заголовок в шапке сайдбара.</div>
+    `;
+    const row = document.createElement("div");
+    row.style.cssText = "display:flex;gap:8px;flex-wrap:wrap";
+    const inp = document.createElement("input");
+    inp.type = "text";
+    inp.value = localStorage.getItem("portal.brand") || "Панель";
+    inp.style.cssText = "flex:1;min-width:200px;background:var(--panel2);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:8px 12px;font-family:inherit;font-size:13px;outline:none";
+    inp.onfocus = () => { inp.style.borderColor = "var(--accent)"; };
+    inp.onblur = () => { inp.style.borderColor = "var(--border)"; };
+    const saveBtn = document.createElement("button");
+    saveBtn.className = "btn";
+    saveBtn.textContent = "Сохранить";
+    saveBtn.onclick = () => {
+      const v = inp.value.trim() || "Панель";
+      localStorage.setItem("portal.brand", v);
+      $("#brandTitle").textContent = v;
+      toast("Сохранено");
+    };
+    row.appendChild(inp);
+    row.appendChild(saveBtn);
+    s2.appendChild(row);
+    container.appendChild(s2);
 
-  // ================== БУФЕР ==================
-  let clips = load("dashboard.clips", []);
-
-  function renderClips() {
-    const grid = $("#clipsList");
-    if (!clips.length) { grid.innerHTML = `<div class="empty">Пока пусто</div>`; return; }
-    grid.innerHTML = clips.map((c) => `
-      <div class="clip-btn" data-id="${c.id}">
-        <span class="label">${escapeHtml(c.label)}</span>
-        <span class="value">${escapeHtml(c.value)}</span>
-        <span class="copied-badge">✓ скопировано</span>
-        <div class="clip-actions">
-          <button class="btn small ghost" data-edit="${c.id}" title="Редактировать">✎</button>
-          <button class="btn small danger" data-del="${c.id}" title="Удалить">✕</button>
+    const s3 = document.createElement("div");
+    s3.className = "sys-section";
+    const totalBytes = new Blob([JSON.stringify(localStorage)]).size;
+    s3.innerHTML = `
+      <div class="sys-section-title">Хранилище</div>
+      <div class="sys-section-hint">localStorage привязан к этому браузеру и этому домену. При очистке данных сайта всё пропадёт — делай экспорт в менеджере сохранения.</div>
+      <div class="sys-stat">
+        <div class="sys-stat-cell">
+          <div class="sys-stat-label">Использовано</div>
+          <div class="sys-stat-value">${formatBytes(totalBytes)}</div>
         </div>
       </div>
-    `).join("");
+    `;
+    container.appendChild(s3);
 
-    grid.querySelectorAll(".clip-btn").forEach((btn) => {
-      btn.onclick = async (e) => {
-        if (e.target.closest("[data-edit],[data-del]")) return;
-        const c = clips.find((x) => x.id === btn.dataset.id);
-        if (!c) return;
-        const ok = await copyText(c.value);
-        if (ok) {
-          btn.classList.add("copied");
-          setTimeout(() => btn.classList.remove("copied"), 1200);
-          toast("Скопировано: " + c.label);
-        } else toast("Не удалось скопировать");
-      };
-    });
-    grid.querySelectorAll("[data-del]").forEach((b) => {
-      b.onclick = (e) => {
-        e.stopPropagation();
-        if (!confirm("Удалить кнопку?")) return;
-        clips = clips.filter((c) => c.id !== b.dataset.del);
-        save("dashboard.clips", clips); renderClips();
-      };
-    });
-    grid.querySelectorAll("[data-edit]").forEach((b) => {
-      b.onclick = (e) => {
-        e.stopPropagation();
-        const c = clips.find((x) => x.id === b.dataset.edit);
-        if (!c) return;
-        const newLabel = prompt("Название:", c.label); if (newLabel === null) return;
-        const newValue = prompt("Значение:", c.value); if (newValue === null) return;
-        c.label = newLabel.trim() || c.label;
-        c.value = newValue;
-        save("dashboard.clips", clips); renderClips();
-      };
-    });
+    const s4 = document.createElement("div");
+    s4.className = "sys-section sys-danger";
+    s4.innerHTML = `
+      <div class="sys-section-title">Сброс настроек</div>
+      <div class="sys-section-hint">Удаляет тему и название. Дерево и содержимое вкладок не затрагиваются.</div>
+    `;
+    const b = document.createElement("button");
+    b.className = "btn danger small";
+    b.textContent = "Сбросить настройки";
+    b.onclick = () => {
+      if (!confirm("Сбросить тему и название?")) return;
+      localStorage.removeItem("portal.theme");
+      localStorage.removeItem("portal.brand");
+      currentTheme = "dark";
+      applyTheme(currentTheme);
+      $("#brandTitle").textContent = "Панель";
+      renderContent();
+      toast("Настройки сброшены");
+    };
+    s4.appendChild(b);
+    container.appendChild(s4);
   }
-
-  $("#addClip").onclick = () => {
-    const label = $("#clipLabel").value.trim();
-    const value = $("#clipValue").value;
-    if (!label || !value) return toast("Заполни название и значение");
-    clips.push({ id: uid(), label, value });
-    save("dashboard.clips", clips);
-    $("#clipLabel").value = $("#clipValue").value = "";
-    renderClips(); toast("Кнопка добавлена");
-  };
-
-  // ================== БЛОКИ ==================
-  let blocks = load("dashboard.blocks", []);
-
-  function runBlock(container, code) {
-    container.innerHTML = "";
-    try {
-      const fn = new Function("el", code);
-      fn(container);
-    } catch (e) {
-      container.innerHTML = `<div style="color:var(--danger);font-size:13px">Ошибка блока: ${escapeHtml(e.message)}</div>`;
-    }
-  }
-
-  function renderBlocks() {
-    const wrap = $("#blocksList");
-    if (!blocks.length) {
-      wrap.innerHTML = `<div class="empty">Пока нет блоков</div>`;
-      return;
-    }
-    wrap.innerHTML = blocks.map((b) => `
-      <div class="block-card" data-id="${b.id}">
-        <div class="block-head">
-          <span class="block-title">${escapeHtml(b.name)}</span>
-          <div class="block-actions">
-            <button class="btn small ghost" data-reload="${b.id}" title="Перезапустить">↻</button>
-            <button class="btn small ghost" data-edit="${b.id}" title="Изменить">✎</button>
-            <button class="btn small danger" data-del="${b.id}" title="Удалить">✕</button>
-          </div>
-        </div>
-        <div class="block-body" id="block-body-${b.id}"></div>
-      </div>
-    `).join("");
-
-    blocks.forEach((b) => {
-      const container = document.getElementById("block-body-" + b.id);
-      if (container) runBlock(container, b.code);
-    });
-
-    wrap.querySelectorAll("[data-reload]").forEach((btn) => {
-      btn.onclick = () => {
-        const b = blocks.find((x) => x.id === btn.dataset.reload);
-        if (!b) return;
-        const container = document.getElementById("block-body-" + b.id);
-        if (container) runBlock(container, b.code);
-      };
-    });
-    wrap.querySelectorAll("[data-edit]").forEach((btn) => {
-      btn.onclick = () => {
-        const b = blocks.find((x) => x.id === btn.dataset.edit);
-        if (!b) return;
-        const newName = prompt("Название:", b.name);
-        if (newName === null) return;
-        const newCode = prompt("Код блока:", b.code);
-        if (newCode === null) return;
-        b.name = newName.trim() || b.name;
-        b.code = newCode;
-        save("dashboard.blocks", blocks);
-        renderBlocks();
-      };
-    });
-    wrap.querySelectorAll("[data-del]").forEach((btn) => {
-      btn.onclick = () => {
-        if (!confirm("Удалить блок?")) return;
-        blocks = blocks.filter((x) => x.id !== btn.dataset.del);
-        save("dashboard.blocks", blocks);
-        renderBlocks();
-      };
-    });
-  }
-
-  $("#addBlock").onclick = () => {
-    const name = $("#blockName").value.trim();
-    const code = $("#blockCode").value;
-    if (!name || !code.trim()) return toast("Заполни название и код");
-    blocks.push({ id: uid(), name, code });
-    save("dashboard.blocks", blocks);
-    $("#blockName").value = "";
-    $("#blockCode").value = "";
-    renderBlocks();
-    toast("Блок добавлен");
-  };
 
   // ================== ЭКСПОРТ / ИМПОРТ ==================
   const download = (data, filename) => {
@@ -664,69 +1684,76 @@ el.querySelector('button').onclick = () =&gt; alert('Работает!');"></tex
     URL.revokeObjectURL(a.href);
   };
 
-  $("#exportAll").onclick = () => {
+  const safeName = (s) => String(s).replace(/[^\w\-]+/g, "_").slice(0, 40) || "tab";
+
+  function exportAll() {
     download({
-      version: 2,
+      version: 3,
       exportedAt: new Date().toISOString(),
-      links, clips, blocks,
-    }, "dashboard.json");
+      tree: stripSystem(tree),
+    }, "portal.json");
     toast("Экспортировано");
-  };
+  }
 
-  $("#importAll").onclick = () => $("#importAllFile").click();
+  function exportTab(tab) {
+    download({
+      version: 1,
+      exportedAt: new Date().toISOString(),
+      name: tab.name,
+      content: tab.content || "",
+    }, safeName(tab.name) + ".json");
+    toast("Вкладка экспортирована");
+  }
 
-  $("#importAllFile").onchange = (e) => {
-    const f = e.target.files[0];
-    if (!f) return;
-    const r = new FileReader();
-    r.onload = () => {
-      try {
-        const data = JSON.parse(r.result);
-        let iL = 0, iC = 0, iB = 0;
-
-        if (data && typeof data === "object" && !Array.isArray(data)) {
-          if (Array.isArray(data.links)) {
-            links = data.links.map((l) => ({ id: l.id || uid(), ...l }));
-            save("dashboard.links", links); renderLinks(); iL = data.links.length;
+  function importAll(opts = {}) {
+    const inp = document.createElement("input");
+    inp.type = "file";
+    inp.accept = ".json,application/json";
+    inp.onchange = () => {
+      const f = inp.files[0];
+      if (!f) return;
+      const r = new FileReader();
+      r.onload = () => {
+        try {
+          const data = JSON.parse(r.result);
+          if (!data || typeof data !== "object" || !Array.isArray(data.tree)) {
+            throw new Error("формат");
           }
-          if (Array.isArray(data.clips)) {
-            clips = data.clips.map((c) => ({ id: c.id || uid(), ...c }));
-            save("dashboard.clips", clips); renderClips(); iC = data.clips.length;
-          }
-          if (Array.isArray(data.blocks)) {
-            blocks = data.blocks.map((b) => ({ id: b.id || uid(), name: b.name || 'Блок', code: b.code || '' }));
-            save("dashboard.blocks", blocks); renderBlocks(); iB = data.blocks.length;
-          }
-        } else if (Array.isArray(data)) {
-          const first = data[0] || {};
-          if ("url" in first || "title" in first) {
-            links = data.map((l) => ({ id: l.id || uid(), ...l }));
-            save("dashboard.links", links); renderLinks(); iL = data.length;
-          } else if ("value" in first || "label" in first) {
-            clips = data.map((c) => ({ id: c.id || uid(), ...c }));
-            save("dashboard.clips", clips); renderClips(); iC = data.length;
+          if (opts.merge) {
+            const existing = tree.filter((x) => !x.system);
+            tree = data.tree.concat(existing);
           } else {
-            throw new Error("unknown structure");
+            tree = data.tree;
           }
-        } else throw new Error("unknown format");
-
-        if (iL || iC || iB) {
-          const parts = [];
-          if (iL) parts.push("ссылок: " + iL);
-          if (iC) parts.push("буфера: " + iC);
-          if (iB) parts.push("блоков: " + iB);
-          toast("Импортировано " + parts.join(", "));
-        } else toast("Нечего импортировать");
-      } catch { toast("Ошибка чтения файла"); }
+          ensureSystem();
+          saveTree();
+          setActive(null);
+          renderTree();
+          renderContent();
+          toast("Импортировано");
+        } catch (err) {
+          toast("Ошибка: " + err.message);
+        }
+      };
+      r.readAsText(f);
     };
-    r.readAsText(f);
-    e.target.value = "";
-  };
+    inp.click();
+  }
+
+  // ================== ВЕРХНИЕ КНОПКИ ==================
+  $("#addRootTab").onclick = () => addChild(null, "tab");
+  $("#addRootFolder").onclick = () => addChild(null, "folder");
+  $("#exportAll").onclick = () => exportAll();
+  $("#importAll").onclick = () => importAll({ merge: false });
 
   // ================== СТАРТ ==================
-  renderLinks();
-  renderClips();
-  renderBlocks();
+  const brand = localStorage.getItem("portal.brand");
+  if (brand) $("#brandTitle").textContent = brand;
+
+  ensureSystem();
+  saveTree();
+  renderTree();
+  renderContent();
 })();
 </script>
 </body>
